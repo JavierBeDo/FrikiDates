@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "859561109142",
+    "project_id": "frikidatesdb",
+    "storage_bucket": "frikidatesdb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:859561109142:android:b2ca9d283a65d6d13fc4b7",
+        "android_client_info": {
+          "package_name": "com.example.frikidates"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz2p7-kXwSeVEaZ_uAQxYC-xwQ55PukB8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
