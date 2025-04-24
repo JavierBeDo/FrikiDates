@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Scrollable content -->
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <!-- Todo tu contenido anterior aquí -->
+            <!-- PEGA desde el TextView appTitle hasta el EditText descEdit -->
+
+            <!-- Título -->
+            <TextView
+                android:id="@+id/appTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FrikiDates"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <!-- Información de usuario -->
+            <TextView
+                android:id="@+id/userInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Name:\nEdad:\nGénero:\nUbicación: No modificable"
+                android:textSize="16sp"
+                app:layout_constraintTop_toBottomOf="@id/appTitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="16dp" />
+
+            <!-- ... Las seis imágenes ... -->
+            <!-- ... Copia y pega aquí las seis ImageView y las vistas siguientes ... -->
+
+            <!-- Imagen fila 1 -->
+            <ImageView
+                android:id="@+id/img1"
+                android:src="@drawable/landscapeplaceholder"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="16dp"
+                android:scaleType="centerCrop"
+                android:background="#CCCCCC"
+                app:layout_constraintTop_toBottomOf="@id/userInfo"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/img2"
+                app:layout_constraintWidth_percent="0.3"/>
+
+            <ImageView
+                android:id="@+id/img2"
+                android:src="@drawable/landscapeplaceholder"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="16dp"
+                android:scaleType="centerCrop"
+                android:background="#CCCCCC"
+                app:layout_constraintTop_toTopOf="@id/img1"
+                app:layout_constraintStart_toEndOf="@id/img1"
+                app:layout_constraintEnd_toStartOf="@id/img3"
+                app:layout_constraintWidth_percent="0.3"/>
+
+            <ImageView
+                android:id="@+id/img3"
+                android:src="@drawable/landscapeplaceholder"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="16dp"
+                android:scaleType="centerCrop"
+                android:background="#CCCCCC"
+                app:layout_constraintTop_toTopOf="@id/img1"
+                app:layout_constraintStart_toEndOf="@id/img2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintWidth_percent="0.3"/>
+
+            <!-- Imagen fila 2 -->
+            <ImageView
+                android:id="@+id/img4"
+                android:src="@drawable/landscapeplaceholder"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="8dp"
+                android:scaleType="centerCrop"
+                android:background="#CCCCCC"
+                app:layout_constraintTop_toBottomOf="@id/img1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/img5"
+                app:layout_constraintWidth_percent="0.3"/>
+
+            <ImageView
+                android:id="@+id/img5"
+                android:src="@drawable/landscapeplaceholder"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="8dp"
+                android:scaleType="centerCrop"
+                android:background="#CCCCCC"
+                app:layout_constraintTop_toTopOf="@id/img4"
+                app:layout_constraintStart_toEndOf="@id/img4"
+                app:layout_constraintEnd_toStartOf="@id/img6"
+                app:layout_constraintWidth_percent="0.3"/>
+
+            <ImageView
+                android:id="@+id/img6"
+                android:src="@drawable/landscapeplaceholder"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="8dp"
+                android:scaleType="centerCrop"
+                android:background="#CCCCCC"
+                app:layout_constraintTop_toTopOf="@id/img4"
+                app:layout_constraintStart_toEndOf="@id/img5"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintWidth_percent="0.3"/>
+
+            <!-- Descripción -->
+            <TextView
+                android:id="@+id/descLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Descripción"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/img4"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <EditText
+                android:id="@+id/descEdit"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:hint="Escribe algo sobre ti..."
+                android:inputType="textMultiLine"
+                android:gravity="top"
+                android:background="@android:drawable/editbox_background"
+                app:layout_constraintTop_toBottomOf="@id/descLabel"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/genderLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Que genero buscas?"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/descEdit" />
+
+            <TextView
+                android:id="@+id/relationLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="Que tipo de relacion buscas?"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/genderLabel" />
+
+            <TextView
+                android:id="@+id/notificacionesLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Notificaciones"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/personalidadLabel2" />
+
+            <TextView
+                android:id="@+id/personalidadLabel2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Personalidad"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/relationLabel" />
+
+            <Spinner
+                android:id="@+id/spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginStart="20dp"
+                app:layout_constraintBottom_toBottomOf="@+id/genderLabel"
+                app:layout_constraintStart_toEndOf="@+id/genderLabel"
+                app:layout_constraintTop_toTopOf="@+id/genderLabel" />
+
+            <Spinner
+                android:id="@+id/spinner2"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginStart="-1dp"
+                app:layout_constraintBottom_toBottomOf="@+id/relationLabel"
+                app:layout_constraintStart_toEndOf="@+id/relationLabel"
+                app:layout_constraintTop_toTopOf="@+id/relationLabel" />
+
+            <CheckBox
+                android:id="@+id/checkBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                app:layout_constraintBottom_toBottomOf="@+id/notificacionesLabel"
+                app:layout_constraintStart_toEndOf="@+id/notificacionesLabel"
+                app:layout_constraintTop_toTopOf="@+id/notificacionesLabel" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+    <!-- Menú inferior fijo -->
+    <LinearLayout
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageButton
+            android:src="@android:drawable/ic_menu_search"
+            android:background="@android:color/transparent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+        <ImageButton
+            android:id="@+id/nav_chat"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_dialog_email" />
+
+        <ImageButton
+            android:src="@android:drawable/ic_menu_myplaces"
+            android:background="@android:color/transparent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

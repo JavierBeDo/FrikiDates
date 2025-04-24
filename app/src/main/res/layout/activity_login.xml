@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LoginActivity">
+
+    <TextView
+        android:id="@+id/tw_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="FRIKIDATES"
+        android:textSize="40sp"
+        android:textStyle="bold|italic"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ViewSwitcher
+        android:id="@+id/viewSwitcher"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/tw_title">
+
+        <!-- Vista de Login -->
+
+        <!-- Vista de Registro -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <EditText
+                android:id="@+id/et_login_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Correo electrónico"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/et_login_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Contraseña"
+                android:inputType="textPassword" />
+
+            <Button
+                android:id="@+id/btn_login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Iniciar sesión" />
+
+            <TextView
+                android:id="@+id/tv_go_to_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="16dp"
+                android:text="¿No tienes cuenta? Créala"
+                android:textColor="@android:color/holo_blue_dark" />
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <EditText
+                    android:id="@+id/et_register_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Nombre"
+                    android:inputType="textPersonName" />
+
+                <EditText
+                    android:id="@+id/et_register_surname"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Apellidos"
+                    android:inputType="textPersonName" />
+
+                <EditText
+                    android:id="@+id/et_register_age"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Edad"
+                    android:inputType="number" />
+
+                <EditText
+                    android:id="@+id/et_register_email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Correo electrónico"
+                    android:inputType="textEmailAddress" />
+
+                <EditText
+                    android:id="@+id/et_register_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Contraseña"
+                    android:inputType="textPassword" />
+
+                <EditText
+                    android:id="@+id/et_register_gender"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Género (ej. hombre, mujer)"
+                    android:inputType="text" />
+
+                <EditText
+                    android:id="@+id/et_register_gender_preference"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Género a buscar"
+                    android:inputType="text" />
+
+                <EditText
+                    android:id="@+id/et_register_age_range"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Rango de edad buscado (ej. 18-30)"
+                    android:inputType="text" />
+
+                <Button
+                    android:id="@+id/btn_register"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Registrar" />
+
+                <TextView
+                    android:id="@+id/tv_go_to_login"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:paddingTop="16dp"
+                    android:text="¿Ya tienes cuenta? Inicia sesión"
+                    android:textColor="@android:color/holo_blue_dark" />
+            </LinearLayout>
+        </ScrollView>
+
+    </ViewSwitcher>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
