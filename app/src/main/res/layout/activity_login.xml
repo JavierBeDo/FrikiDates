@@ -20,58 +20,25 @@
 
     <ViewSwitcher
         android:id="@+id/viewSwitcher"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tw_title">
 
         <!-- Vista de Login -->
 
         <!-- Vista de Registro -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <EditText
-                android:id="@+id/et_login_email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Correo electrónico"
-                android:inputType="textEmailAddress" />
-
-            <EditText
-                android:id="@+id/et_login_password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Contraseña"
-                android:inputType="textPassword" />
-
-            <Button
-                android:id="@+id/btn_login"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Iniciar sesión" />
-
-            <TextView
-                android:id="@+id/tv_go_to_register"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:paddingTop="16dp"
-                android:text="¿No tienes cuenta? Créala"
-                android:textColor="@android:color/holo_blue_dark" />
-        </LinearLayout>
-
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="10dp">
 
                 <EditText
                     android:id="@+id/et_register_name"
@@ -108,32 +75,256 @@
                     android:hint="Contraseña"
                     android:inputType="textPassword" />
 
-                <EditText
-                    android:id="@+id/et_register_gender"
+                <TextView
+                    android:id="@+id/tv_gender"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Género (ej. hombre, mujer)"
-                    android:inputType="text" />
+                    android:text="Genero" />
+
+                <Spinner
+                    android:id="@+id/spinner3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/tv_gender_find"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Genero a buscar" />
+
+                <Spinner
+                    android:id="@+id/spinner4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/tv_edad"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Rango de edad" />
+
+                <SeekBar
+                    android:id="@+id/seekBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_edadmax"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="18" />
+
+                    <TextView
+                        android:id="@+id/tv_edadmin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:foregroundGravity="right"
+                        android:gravity="right"
+                        android:text="99+"
+                        android:textAlignment="viewEnd" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="16dp">
+
+                    <TextView
+                        android:id="@+id/birthdate_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Fecha de Nacimiento"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/birthdate_display"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="#E4AAAA"
+                        android:padding="12dp"
+                        android:text="Selecciona tu fecha de nacimiento"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_relacion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Que tipo de relacion buscas?" />
+
+                <Spinner
+                    android:id="@+id/spinner5"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/tv_distancia"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Distancia maxima" />
+
+                <SeekBar
+                    android:id="@+id/seekBar3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_edadmax"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="5km" />
+
+                    <TextView
+                        android:id="@+id/tv_edadmin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:foregroundGravity="right"
+                        android:gravity="right"
+                        android:text="200km"
+                        android:textAlignment="viewEnd" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/descLabel2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Descripción"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/img4" />
 
                 <EditText
-                    android:id="@+id/et_register_gender_preference"
+                    android:id="@+id/descEdit2"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Género a buscar"
-                    android:inputType="text" />
+                    android:layout_height="100dp"
+                    android:background="@android:drawable/editbox_background"
+                    android:gravity="top"
+                    android:hint="Escribe algo sobre ti..."
+                    android:inputType="textMultiLine"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/descLabel" />
 
-                <EditText
-                    android:id="@+id/et_register_age_range"
+                <TextView
+                    android:id="@+id/tv_how_i_perceive_world"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cómo percibo el mundo"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Rango de edad buscado (ej. 18-30)"
-                    android:inputType="text" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_observer"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Observador" />
+
+                    <TextView
+                        android:id="@+id/tv_analytic"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Analítico" />
+
+                    <TextView
+                        android:id="@+id/tv_versatile"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Versátil" />
+
+                    <TextView
+                        android:id="@+id/tv_proud"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Orgulloso" />
+
+                    <ImageView
+                        android:id="@+id/iv_expand"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="8dp"
+                        android:contentDescription="Expand"
+                        android:src="@drawable/flecha" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_more_words"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tv_hope"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Esperanza" />
+
+                    <TextView
+                        android:id="@+id/tv_dreams"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Sueños" />
+
+                    <TextView
+                        android:id="@+id/tv_friendship"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Amistad" />
+
+                    <TextView
+                        android:id="@+id/tv_creativity"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Creatividad" />
+                </LinearLayout>
+
 
                 <Button
                     android:id="@+id/btn_register"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Registrar" />
+                    android:text="Siguiente" />
 
                 <TextView
                     android:id="@+id/tv_go_to_login"
@@ -143,9 +334,57 @@
                     android:paddingTop="16dp"
                     android:text="¿Ya tienes cuenta? Inicia sesión"
                     android:textColor="@android:color/holo_blue_dark" />
+
             </LinearLayout>
         </ScrollView>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <EditText
+                android:id="@+id/et_login_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Correo electrónico"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/et_login_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Contraseña"
+                android:inputType="textPassword" />
+
+            <Button
+                android:id="@+id/btn_login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Iniciar sesión" />
+
+            <TextView
+                android:id="@+id/tv_go_to_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="16dp"
+                android:text="¿No tienes cuenta? Créala"
+                android:textColor="@android:color/holo_blue_dark" />
+
+        </LinearLayout>
+
     </ViewSwitcher>
+
+    <androidx.constraintlayout.helper.widget.Layer
+        android:id="@+id/layer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="2dp"
+        app:constraint_referenced_ids="viewSwitcher"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="66dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
