@@ -1,11 +1,17 @@
 package com.example.frikidates
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 class LoginActivity : AppCompatActivity() {
 
@@ -29,11 +35,21 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnRegister: Button
     private val db = FirebaseFirestore.getInstance()
 
+    // Location
+    private lateinit var locationManager: LocationManager
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
         mAuth = FirebaseAuth.getInstance()
+
+        // --------- LOCATION --------
+        locationManager = LocationManager(this)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        obtenerUbicacion()
 
         viewSwitcher = findViewById(R.id.viewSwitcher)
         etEmail = findViewById(R.id.et_login_email)
@@ -42,7 +58,7 @@ class LoginActivity : AppCompatActivity() {
         tvGoToRegister = findViewById(R.id.tv_go_to_register)
         tvGoToLogin = findViewById(R.id.tv_go_to_login)
 
-        // -------- REGISTRO --------
+        // --------- REGISTRO --------
         etName = findViewById(R.id.et_register_name)
         etSurname = findViewById(R.id.et_register_surname)
         etAge = findViewById(R.id.et_register_age)
@@ -136,4 +152,31 @@ class LoginActivity : AppCompatActivity() {
                 }
         }
     }
+
+    private fun obtenerUbicacion() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            location?.let {
+                val latitude = it.latitude
+                val longitude = it.longitude
+                locationManager.saveLocation(latitude, longitude) // Guardar ubicación
+                Toast.makeText(this, "Ubicación guardada: $latitude, $longitude", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                obtenerUbicacion()
+            } else {
+                Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
