@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:cardview="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:backgroundTint="#FFFFFF"
@@ -44,7 +46,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/appTitle" />
 
-            <!-- Lista de mensajes (simulada con LinearLayout para el ejemplo) -->
+            <!-- Lista de mensajes con CardView -->
             <LinearLayout
                 android:id="@+id/messageList"
                 android:layout_width="0dp"
@@ -55,94 +57,132 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/searchBar">
 
-                <!-- Repetible (puedes inflar estos elementos desde un adapter o hacerlo en un RecyclerView en código real) -->
-                <LinearLayout
-                    android:id="@+id/Ly_1"
+                <!-- CardView para el mensaje 1 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cd_chats"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="8dp">
-
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/landscapeplaceholder"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_launcher_foreground" />
+                    android:layout_marginBottom="8dp"
+                    cardview:cardCornerRadius="10sp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-                        <TextView
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Lorem ipsum"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                            android:padding="10sp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                            <de.hdodenhof.circleimageview.CircleImageView
+                                android:id="@+id/fotoPerfilMensaje"
+                                android:layout_width="24sp"
+                                android:layout_height="24sp"
+                                android:src="@mipmap/ic_launcher" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="mensaje mensaje"
-                            android:textSize="14sp" />
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <TextView
+                                    android:id="@+id/nombreMensaje"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Kevin" />
+
+                                <TextView
+                                    android:id="@+id/horaMensaje"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="12:30" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/mensajeMensaje"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Hola, bienvenido"
+                                android:visibility="visible" />
+
+                            <ImageView
+                                android:id="@+id/mensajeFoto"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:visibility="gone" />
+                        </LinearLayout>
                     </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="12:30"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/Ly_2"
+                <!-- CardView para el mensaje 2 -->
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="8dp">
-
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/landscapeplaceholder"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_launcher_foreground" />
+                    cardview:cardCornerRadius="10sp"
+                    android:layout_marginBottom="8dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-                        <TextView
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Lorem ipsum"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                            android:padding="10sp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                            <de.hdodenhof.circleimageview.CircleImageView
+                                android:id="@+id/fotoPerfilMensaje2"
+                                android:layout_width="24sp"
+                                android:layout_height="24sp"
+                                android:src="@mipmap/ic_launcher"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="mensaje mensaje"
-                            android:textSize="14sp" />
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <TextView
+                                    android:id="@+id/nombreMensaje2"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Kevin"
+                                    android:layout_weight="1"/>
+
+                                <TextView
+                                    android:id="@+id/horaMensaje2"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="12:30"/>
+                            </LinearLayout>
+
+                            <TextView
+                                android:visibility="visible"
+                                android:id="@+id/mensajeMensaje2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Hola, bienvenido nuevamente"/>
+
+                            <ImageView
+                                android:id="@+id/mensajeFoto2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:visibility="gone"/>
+                        </LinearLayout>
                     </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="12:30"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <!-- Puedes copiar y pegar más bloques similares aquí -->
+                <!-- Puedes copiar y pegar más bloques de CardView aquí -->
 
             </LinearLayout>
 
@@ -152,7 +192,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="cifrado de extremo a extremo"
+                android:text="Cifrado de extremo a extremo"
                 android:textColor="#888888"
                 android:textSize="12sp"
                 app:layout_constraintStart_toStartOf="parent"

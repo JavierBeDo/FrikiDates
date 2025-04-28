@@ -6,22 +6,21 @@ import android.os.Bundle
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 
 
 class ChatsActivity : AppCompatActivity() {
 
     private lateinit var nav_profile: ImageView
     private lateinit var nav_search: ImageView
-    private lateinit var Ly_1: LinearLayout
-    private lateinit var Ly_2: LinearLayout
+    private lateinit var Ly_1: CardView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chats)
 
         nav_search = findViewById(R.id.nav_search)
         nav_profile = findViewById(R.id.nav_profile)
-        Ly_1 = findViewById(R.id.Ly_1)
-        Ly_2 = findViewById(R.id.Ly_2)
+        Ly_1 = findViewById(R.id.cd_chats)
 
         nav_search.setOnClickListener {
             startActivity(Intent(this, MainMenuActivity::class.java))

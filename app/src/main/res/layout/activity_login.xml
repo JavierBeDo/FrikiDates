@@ -30,6 +30,43 @@
         <!-- Vista de Login -->
 
         <!-- Vista de Registro -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <EditText
+                android:id="@+id/et_login_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Correo electrónico"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/et_login_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Contraseña"
+                android:inputType="textPassword" />
+
+            <Button
+                android:id="@+id/btn_login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Iniciar sesión" />
+
+            <TextView
+                android:id="@+id/tv_go_to_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="16dp"
+                android:text="¿No tienes cuenta? Créala"
+                android:textColor="@android:color/holo_blue_dark" />
+
+        </LinearLayout>
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -337,43 +374,6 @@
 
             </LinearLayout>
         </ScrollView>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <EditText
-                android:id="@+id/et_login_email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Correo electrónico"
-                android:inputType="textEmailAddress" />
-
-            <EditText
-                android:id="@+id/et_login_password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Contraseña"
-                android:inputType="textPassword" />
-
-            <Button
-                android:id="@+id/btn_login"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Iniciar sesión" />
-
-            <TextView
-                android:id="@+id/tv_go_to_register"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:paddingTop="16dp"
-                android:text="¿No tienes cuenta? Créala"
-                android:textColor="@android:color/holo_blue_dark" />
-
-        </LinearLayout>
 
     </ViewSwitcher>
 

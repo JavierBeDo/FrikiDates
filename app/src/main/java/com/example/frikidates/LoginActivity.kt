@@ -47,6 +47,7 @@ class LoginActivity : AppCompatActivity() {
         etPassword = findViewById(R.id.et_login_password)
         btnLogin = findViewById(R.id.btn_login)
         tvGoToRegister = findViewById(R.id.tv_go_to_register)
+        mAuth = FirebaseAuth.getInstance()
 
         // -------- REGISTRO --------
         etName = findViewById(R.id.et_register_name)
