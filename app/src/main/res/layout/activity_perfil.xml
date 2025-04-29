@@ -237,11 +237,13 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <ImageButton
-            android:src="@android:drawable/ic_menu_search"
-            android:background="@android:color/transparent"
+            android:id="@+id/nav_search2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:padding="12dp"
+            android:src="@android:drawable/ic_menu_search" />
 
         <ImageButton
             android:id="@+id/nav_chat"
@@ -249,14 +251,16 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@android:color/transparent"
+            android:padding="12dp"
             android:src="@android:drawable/ic_dialog_email" />
 
         <ImageButton
-            android:src="@android:drawable/ic_menu_myplaces"
-            android:background="@android:color/transparent"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:padding="12dp"
+            android:src="@android:drawable/ic_menu_myplaces" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
