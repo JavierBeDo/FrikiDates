@@ -12,33 +12,17 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp">
 
-            <!-- Todo tu contenido anterior aquí -->
-            <!-- PEGA desde el TextView appTitle hasta el EditText descEdit -->
-
             <!-- Título -->
-            <ImageView
-                android:id="@+id/img1"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:background="#CCCCCC"
-                android:scaleType="centerCrop"
-                android:src="@drawable/landscapeplaceholder"
-                app:layout_constraintBottom_toTopOf="@+id/descLabel"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/appTitle"
-                app:layout_constraintWidth_percent="0.3" />
-
             <TextView
                 android:id="@+id/appTitle"
                 android:layout_width="wrap_content"
@@ -46,14 +30,27 @@
                 android:text="FrikiDates"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <!-- Información de usuario -->
+
+            <ImageView
+                android:id="@+id/img1"
+                android:layout_width="366dp"
+                android:layout_height="0dp"
+                android:background="@mipmap/ic_launcher_foreground_img"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="@+id/userInfo"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/appTitle"
+                app:layout_constraintWidth_percent="0.3" />
+
             <TextView
                 android:id="@+id/userInfo"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="303dp"
                 android:layout_marginTop="16dp"
                 android:text="Name:\nEdad:\nGénero:\nUbicación: Colombia"
                 android:textSize="16sp"
@@ -61,41 +58,35 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/appTitle" />
 
-            <!-- ... Las seis imágenes ... -->
-            <!-- ... Copia y pega aquí las seis ImageView y las vistas siguientes ... -->
-
-            <!-- Imagen fila 1 -->
-
-            <!-- Imagen fila 2 -->
-
             <!-- Descripción -->
             <TextView
                 android:id="@+id/descLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:text="Descripción"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                tools:layout_editor_absoluteY="382dp" />
+                app:layout_constraintTop_toBottomOf="@+id/userInfo" />
 
             <EditText
                 android:id="@+id/descEdit"
                 android:layout_width="0dp"
                 android:layout_height="100dp"
+                android:background="@android:drawable/editbox_background"
+                android:gravity="top"
                 android:hint="Escribe algo sobre ti..."
                 android:inputType="textMultiLine"
-                android:gravity="top"
-                android:background="@android:drawable/editbox_background"
-                app:layout_constraintTop_toBottomOf="@id/descLabel"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintTop_toBottomOf="@id/descLabel" />
 
             <TextView
                 android:id="@+id/genderLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Que genero buscas?"
+                android:text="¿Qué género buscas?"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/descEdit" />
@@ -105,7 +96,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="30dp"
-                android:text="Que tipo de relacion buscas?"
+                android:text="¿Qué tipo de relación buscas?"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/genderLabel" />
@@ -119,6 +110,61 @@
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/relationLabel" />
+
+            <TextView
+                android:id="@+id/tv_how_i_perceive_world3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Cómo percibo el mundo"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/personalidadLabel2" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_how_i_perceive_world3">
+
+                <TextView
+                    android:id="@+id/tv_observer"
+                    android:layout_width="68dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/circle_background"
+                    android:padding="8dp"
+                    android:text="Observador" />
+
+                <TextView
+                    android:id="@+id/tv_analytic"
+                    android:layout_width="68dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/circle_background"
+                    android:padding="8dp"
+                    android:text="Analítico" />
+
+                <TextView
+                    android:id="@+id/tv_versatile"
+                    android:layout_width="68dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/circle_background"
+                    android:padding="8dp"
+                    android:text="Versátil" />
+
+                <TextView
+                    android:id="@+id/tv_proud"
+                    android:layout_width="68dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/circle_background"
+                    android:padding="8dp"
+                    android:text="Orgulloso" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/textView"
@@ -144,5 +190,6 @@
     </ScrollView>
 
     <!-- Menú inferior fijo -->
+    <!-- Aquí puedes agregar tu menú inferior si es necesario -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

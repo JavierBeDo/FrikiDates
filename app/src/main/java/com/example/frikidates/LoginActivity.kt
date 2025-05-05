@@ -40,7 +40,17 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+
+        val userPreferences = UserPreferences(this)
+        val user = userPreferences.getUser()
+
+        if (user != null) {
+            // Redirigir a la actividad principal
+            startActivity(Intent(this, MainMenuActivity::class.java))
+            finish()
+        } else {
+            setContentView(R.layout.activity_login)
+        }
 
         viewSwitcher = findViewById(R.id.viewSwitcher)
         etEmail = findViewById(R.id.et_login_email)
@@ -52,7 +62,6 @@ class LoginActivity : AppCompatActivity() {
         // -------- REGISTRO --------
         etName = findViewById(R.id.et_register_name)
         etSurname = findViewById(R.id.et_register_surname)
-        etAge = findViewById(R.id.et_register_age)
         etEmail_registrer = findViewById(R.id.et_register_email)
         etPassword_registrer = findViewById(R.id.et_register_password)
         spinnerGender = findViewById(R.id.spinner3)
@@ -78,6 +87,7 @@ class LoginActivity : AppCompatActivity() {
             mAuth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+                    saveUserToPreferences("ejemplo")
                     startActivity(Intent(this, MainMenuActivity::class.java))
                     finish()
                 }
@@ -140,7 +150,7 @@ class LoginActivity : AppCompatActivity() {
                                     db.collection("profiles").document("profile_${userDocs.size() + 1}").set(perfilData)
                                         .addOnSuccessListener {
                                             Toast.makeText(this, "Usuario registrado correctamente", Toast.LENGTH_SHORT).show()
-                                            //viewSwitcher.showPrevious()
+                                            saveUserToPreferences(newId)
                                             startActivity(Intent(this, AddphotosActivity::class.java))
                                         }
                                 }
@@ -200,5 +210,11 @@ class LoginActivity : AppCompatActivity() {
             val date = "$selectedDay/${selectedMonth + 1}/$selectedYear"
             birthdateDisplay.text = date
         }, year, month, day).show()
+    }
+
+    private fun saveUserToPreferences(userId: String) {
+        val user = User(userId)
+        val userPreferences = UserPreferences(this)
+        userPreferences.saveUser(user)
     }
 }

@@ -30,42 +30,6 @@
         <!-- Vista de Login -->
 
         <!-- Vista de Registro -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <EditText
-                android:id="@+id/et_login_email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Correo electrónico"
-                android:inputType="textEmailAddress" />
-
-            <EditText
-                android:id="@+id/et_login_password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Contraseña"
-                android:inputType="textPassword" />
-
-            <Button
-                android:id="@+id/btn_login"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Iniciar sesión" />
-
-            <TextView
-                android:id="@+id/tv_go_to_register"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:paddingTop="16dp"
-                android:text="¿No tienes cuenta? Créala"
-                android:textColor="@android:color/holo_blue_dark" />
-
-        </LinearLayout>
 
         <ScrollView
             android:layout_width="match_parent"
@@ -90,13 +54,6 @@
                     android:layout_height="wrap_content"
                     android:hint="Apellidos"
                     android:inputType="textPersonName" />
-
-                <EditText
-                    android:id="@+id/et_register_age"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Edad"
-                    android:inputType="number" />
 
                 <EditText
                     android:id="@+id/et_register_email"
@@ -354,8 +311,105 @@
                         android:background="@drawable/circle_background"
                         android:padding="8dp"
                         android:text="Creatividad" />
+
                 </LinearLayout>
 
+
+                <TextView
+                    android:id="@+id/tv_how_i_perceive_world2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="15dp"
+                    android:text="Cómo percibo el mundo"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_observer"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Observador" />
+
+                    <TextView
+                        android:id="@+id/tv_analytic"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Analítico" />
+
+                    <TextView
+                        android:id="@+id/tv_versatile"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Versátil" />
+
+                    <TextView
+                        android:id="@+id/tv_proud"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Orgulloso" />
+
+                    <ImageView
+                        android:id="@+id/iv_expand"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="8dp"
+                        android:contentDescription="Expand"
+                        android:src="@drawable/flecha" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_more_words"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tv_hope"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Esperanza" />
+
+                    <TextView
+                        android:id="@+id/tv_dreams"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Sueños" />
+
+                    <TextView
+                        android:id="@+id/tv_friendship"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Amistad" />
+
+                    <TextView
+                        android:id="@+id/tv_creativity"
+                        android:layout_width="68dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_background"
+                        android:padding="8dp"
+                        android:text="Creatividad" />
+                </LinearLayout>
 
                 <Button
                     android:id="@+id/btn_register"
@@ -374,6 +428,43 @@
 
             </LinearLayout>
         </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <EditText
+                android:id="@+id/et_login_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Correo electrónico"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/et_login_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Contraseña"
+                android:inputType="textPassword" />
+
+            <Button
+                android:id="@+id/btn_login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Iniciar sesión" />
+
+            <TextView
+                android:id="@+id/tv_go_to_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="16dp"
+                android:text="¿No tienes cuenta? Créala"
+                android:textColor="@android:color/holo_blue_dark" />
+
+        </LinearLayout>
 
     </ViewSwitcher>
 

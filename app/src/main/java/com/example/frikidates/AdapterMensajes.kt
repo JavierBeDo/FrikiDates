@@ -11,11 +11,11 @@ import java.util.*
 
 class AdapterMensajes(private val c: Context) : RecyclerView.Adapter<HolderMensaje>() {
 
-    private val listMensaje: MutableList<MensajeEnviar> = ArrayList()
+    private val listMensaje: MutableList<MensajeRecibir> = ArrayList()
 
-    fun addMensaje(v: MensajeEnviar) {
+    fun addMensaje(v: MensajeRecibir) {
         listMensaje.add(v)
-        notifyItemInserted(listMensaje.size - 1) // Corrige el índice
+        notifyItemInserted(listMensaje.size - 1)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HolderMensaje {
@@ -26,41 +26,25 @@ class AdapterMensajes(private val c: Context) : RecyclerView.Adapter<HolderMensa
     override fun onBindViewHolder(holder: HolderMensaje, position: Int) {
         val mensaje = listMensaje[position]
 
-        // Acceder a las propiedades directamente
-        holder.nombre.text = mensaje.nombre // Cambié a mensaje.nombre
-        holder.mensaje.text = mensaje.mensaje
-        if (mensaje.type_mensaje == "2") {
+        holder.nombre.text = mensaje.senderId
+
+        if (mensaje.type == "image") {
             holder.fotoMensaje.visibility = View.VISIBLE
-            holder.mensaje.visibility = View.VISIBLE
-            Glide.with(c).load(mensaje.urlFoto).into(holder.fotoMensaje)
-        } else if (mensaje.type_mensaje == "1") {
+            holder.mensaje.visibility = View.GONE
+            Glide.with(c).load(mensaje.text).into(holder.fotoMensaje)
+        } else {
             holder.fotoMensaje.visibility = View.GONE
             holder.mensaje.visibility = View.VISIBLE
+            holder.mensaje.text = mensaje.text
         }
 
-        if (mensaje.fotoPerfil.isNullOrEmpty()) {
-            holder.fotoMensajePerfil.setImageResource(R.mipmap.ic_launcher)
-        } else {
-            Glide.with(c).load(mensaje.fotoPerfil).into(holder.fotoMensajePerfil)
-        }
+        holder.fotoMensajePerfil.setImageResource(R.mipmap.ic_launcher) // Se puede actualizar según sea necesario
 
-        val codigoHora = listMensaje.get(position).hora?.get("timestamp")
-
-        val timestamp: Long = when (codigoHora) {
-            is Long -> codigoHora // Si ya es Long
-            is Int -> codigoHora.toLong() // Si es Int, conviértelo a Long
-            is String -> codigoHora.toLongOrNull() ?: 0L // Si es String, intenta convertirlo a Long
-            else -> 0L // Valor por defecto en caso de que no sea ninguno de los anteriores
-        }
-
-        val d = Date(timestamp) // Ahora timestamp es un Long
-        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault()) // AM/PM
+        val timestamp = mensaje.timestamp?.time ?: 0L
+        val d = Date(timestamp)
+        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
         holder.hora.text = sdf.format(d)
-
-
-
     }
-
 
     override fun getItemCount(): Int = listMensaje.size
 }
