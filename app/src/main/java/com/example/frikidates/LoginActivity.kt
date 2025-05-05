@@ -1,11 +1,17 @@
 package com.example.frikidates
 
+import android.Manifest
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
@@ -38,6 +44,10 @@ class LoginActivity : AppCompatActivity() {
     private var isExpanded = false
     private val db = FirebaseFirestore.getInstance()
 
+    // Location
+    private lateinit var locationManager: LocationManager
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -48,6 +58,12 @@ class LoginActivity : AppCompatActivity() {
         btnLogin = findViewById(R.id.btn_login)
         tvGoToRegister = findViewById(R.id.tv_go_to_register)
         mAuth = FirebaseAuth.getInstance()
+
+        // --------- LOCATION --------
+        locationManager = LocationManager(this)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        obtenerUbicacion()
 
         // -------- REGISTRO --------
         etName = findViewById(R.id.et_register_name)
@@ -200,5 +216,32 @@ class LoginActivity : AppCompatActivity() {
             val date = "$selectedDay/${selectedMonth + 1}/$selectedYear"
             birthdateDisplay.text = date
         }, year, month, day).show()
+    }
+
+    private fun obtenerUbicacion() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            location?.let {
+                val latitude = it.latitude
+                val longitude = it.longitude
+                locationManager.saveLocation(latitude, longitude) // Guardar ubicación
+                Toast.makeText(this, "Ubicación guardada: $latitude, $longitude", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                obtenerUbicacion()
+            } else {
+                Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
