@@ -84,24 +84,32 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Imagen de perfil (simulada como fondo) -->
-    <ImageView
-        android:id="@+id/img_profile"
+    <!-- CardStackView para mostrar los perfiles -->
+    <!-- CardStackView para mostrar los perfiles -->
+    <com.yuyakaido.android.cardstackview.CardStackView
+        android:id="@+id/cardStackView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
-        android:background="@mipmap/ic_launcher_foreground_img"
-        android:scaleType="centerInside"
+        android:padding="16dp"
+        app:layout_constrainedHeight="true"
+        app:layout_constrainedWidth="true"
         app:layout_constraintBottom_toTopOf="@+id/bottom_buttons"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_app_title" />
-
+        app:layout_constraintTop_toBottomOf="@+id/tv_app_title"
+        app:layout_constraintVertical_bias="0.0"
+        app:layout_editor_absoluteX="0dp"
+        app:layout_editor_absoluteY="83dp"
+        app:layout_manager="com.yuyakaido.android.cardstackview.StackFromBottomManager"
+        app:swipe_direction="horizontal"
+        app:visible_count="3" /> <!-- Configura las propiedades según tus necesidades -->
     <!-- Botones de acción (izquierda, no, sí) -->
     <LinearLayout
         android:id="@+id/bottom_buttons"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="60dp"
         android:gravity="center"
         android:orientation="horizontal"
@@ -131,6 +139,7 @@
             android:src="@android:drawable/btn_star_big_on" />
     </LinearLayout>
 
+    <!-- Barra inferior de navegación -->
     <!-- Barra inferior de navegación -->
     <LinearLayout
         android:id="@+id/bottom_nav"
