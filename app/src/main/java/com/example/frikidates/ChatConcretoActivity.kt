@@ -1,5 +1,6 @@
 package com.example.frikidates
 
+import MensajeEnviar
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -53,19 +54,18 @@ class ChatConcretoActivity : AppCompatActivity() {
         btnEnviar.setOnClickListener {
             val mensajeTexto = txtMensaje.text.toString().trim()
             if (mensajeTexto.isNotEmpty()) {
-                val timestamp = System.currentTimeMillis()
-                val mensajeId = "mensaje_$timestamp"
 
-                val mensaje = hashMapOf(
-                    "senderId" to senderId,
-                    "text" to mensajeTexto,
-                    "timestamp" to FieldValue.serverTimestamp()
+                val mensaje = MensajeEnviar(
+                    senderId = senderId,
+                    text = mensajeTexto,
+                    timestamp = FieldValue.serverTimestamp(),
+                    type = "text"
                 )
 
                 db.collection("matches")
                     .document(matchId)
                     .collection("messages")
-                    .document(mensajeId)
+                    .document("mensaje_${System.currentTimeMillis()}")
                     .set(mensaje)
                     .addOnSuccessListener {
                         txtMensaje.text.clear()
@@ -110,8 +110,8 @@ class ChatConcretoActivity : AppCompatActivity() {
                 }
 
                 for (doc in snapshots!!.documentChanges) {
+                    val mensaje = doc.document.toObject(MensajeRecibir::class.java)
                     if (doc.type == DocumentChange.Type.ADDED) {
-                        val mensaje = doc.document.toObject(MensajeRecibir::class.java)
                         adapter.addMensaje(mensaje)
                     }
                 }
@@ -122,7 +122,7 @@ class ChatConcretoActivity : AppCompatActivity() {
         rvMensajes.scrollToPosition(adapter.itemCount - 1)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    /* override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PHOTO_SEND && resultCode == RESULT_OK) {
             val uri = data?.data
@@ -166,4 +166,5 @@ class ChatConcretoActivity : AppCompatActivity() {
                 }
         }
     }
+    */
 }

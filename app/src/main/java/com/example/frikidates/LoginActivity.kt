@@ -2,13 +2,28 @@ package com.example.frikidates
 
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
+import android.util.Log
 import android.view.View
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
+import android.widget.ViewSwitcher
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import java.util.*
+import com.google.firebase.firestore.QuerySnapshot
+import java.util.Calendar
+
 
 class LoginActivity : AppCompatActivity() {
 
@@ -22,7 +37,6 @@ class LoginActivity : AppCompatActivity() {
     // Registro
     private lateinit var etName: EditText
     private lateinit var etSurname: EditText
-    private lateinit var etAge: EditText
     private lateinit var etEmail_registrer: EditText
     private lateinit var etPassword_registrer: EditText
     private lateinit var spinnerGender: Spinner
@@ -35,6 +49,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var llMoreWords: LinearLayout
     private lateinit var ivExpand: ImageView
     private lateinit var birthdateDisplay: TextView
+    private lateinit var descEdit2 : EditText
     private var isExpanded = false
     private val db = FirebaseFirestore.getInstance()
 
@@ -51,6 +66,29 @@ class LoginActivity : AppCompatActivity() {
         } else {
             setContentView(R.layout.activity_login)
         }
+
+        val db = FirebaseFirestore.getInstance()
+        val interestsRef = db.collection("interests")
+
+        interestsRef.get().addOnCompleteListener { task: Task<QuerySnapshot> ->
+            if (task.isSuccessful) {
+                for (document in task.result) {
+                    // Obtener el grupo familiar
+                    val groupName = document.id
+                    val names =
+                        document["name"] as List<String>? // Asumiendo que los nombres están en un campo "name"
+
+                    // Llamar a la función para agregar el grupo y sus intereses
+                    if (names != null) {
+                        addGroupToLayout(groupName, names)
+                    }
+                }
+            } else {
+                Log.d("Firebase", "Error getting documents: ", task.exception)
+            }
+        }
+
+
 
         viewSwitcher = findViewById(R.id.viewSwitcher)
         etEmail = findViewById(R.id.et_login_email)
@@ -74,6 +112,7 @@ class LoginActivity : AppCompatActivity() {
         llMoreWords = findViewById(R.id.ll_more_words)
         ivExpand = findViewById(R.id.iv_expand)
         birthdateDisplay = findViewById(R.id.birthdate_display)
+        descEdit2 = findViewById(R.id.descEdit2)
 
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString()
@@ -109,50 +148,68 @@ class LoginActivity : AppCompatActivity() {
         btnRegister.setOnClickListener {
             val name = etName.text.toString()
             val surname = etSurname.text.toString()
-            val age = etAge.text.toString().toIntOrNull() ?: -1
             val email = etEmail_registrer.text.toString()
             val password = etPassword_registrer.text.toString()
             val gender = spinnerGender.selectedItem.toString()
             val genderPref = spinnerGenderPref.selectedItem.toString()
             val ageRange = "${tvAgeRangeMin.text}-${tvAgeRangeMax.text}"
             val birthdate = birthdateDisplay.text.toString()
+            val desc = descEdit2.text.toString()
+            val age = calculateAge(birthdate)
 
-            if (name.isEmpty() || surname.isEmpty() || age == -1 || email.isEmpty() || password.isEmpty()
-                || gender.isEmpty() || genderPref.isEmpty() || birthdate == "Selecciona tu fecha de nacimiento"
+            if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty()
+                || gender.isEmpty() || genderPref.isEmpty() || desc.isEmpty()
+                || birthdate == "Selecciona tu fecha de nacimiento" || age == -1
             ) {
                 Toast.makeText(this, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnSuccessListener {
-                    db.collection("user").get()
-                        .addOnSuccessListener { userDocs ->
-                            val newId = "user_${userDocs.size() + 1}"
-                            val userData = hashMapOf(
-                                "name" to name,
-                                "surname" to surname,
-                                "email" to email,
-                                "birthdate" to birthdate
-                            )
+                .addOnSuccessListener { authResult ->
+                    val uid = authResult.user?.uid ?: return@addOnSuccessListener
 
-                            db.collection("user").document(newId).set(userData)
+                    // Recoger intereses seleccionados
+                    val intereses = mutableListOf<String>()
+                    for (i in 0 until llMoreWords.childCount) {
+                        val view = llMoreWords.getChildAt(i)
+                        if (view is TextView && view.currentTextColor == resources.getColor(R.color.verde_seleccionado)) {
+                            intereses.add(view.text.toString())
+                        }
+                    }
+
+                    val profileId = "profile_$uid"
+
+                    // Datos del documento user/{uid}
+                    val userData = hashMapOf(
+                        "status" to "active",
+                        "profileId" to "profiles/$profileId"
+                    )
+
+                    // Datos del documento profiles/profile_$uid
+                    val perfilData = hashMapOf(
+                        "name" to name,
+                        "surname" to surname,
+                        "email" to email,
+                        "birthdate" to birthdate,
+                        "edad" to age,
+                        "genero" to gender,
+                        "preferenciaGenero" to genderPref,
+                        "rangoEdadBuscado" to ageRange,
+                        "distanciaMax" to 50,
+                        "intereses" to intereses,
+                        "bio" to desc,
+                        "imgUrl" to ""
+                    )
+
+                    // Guardar en Firestore
+                    db.collection("profiles").document(profileId).set(perfilData)
+                        .addOnSuccessListener {
+                            db.collection("user").document(uid).set(userData)
                                 .addOnSuccessListener {
-                                    val perfilData = hashMapOf(
-                                        "edad" to age,
-                                        "genero" to gender,
-                                        "preferenciaGenero" to genderPref,
-                                        "rangoEdadBuscado" to ageRange,
-                                        "intereses" to listOf("anime", "videojuegos"),
-                                        "bio" to "Fan de manga y sci-fi"
-                                    )
-
-                                    db.collection("profiles").document("profile_${userDocs.size() + 1}").set(perfilData)
-                                        .addOnSuccessListener {
-                                            Toast.makeText(this, "Usuario registrado correctamente", Toast.LENGTH_SHORT).show()
-                                            saveUserToPreferences(newId)
-                                            startActivity(Intent(this, AddphotosActivity::class.java))
-                                        }
+                                    Toast.makeText(this, "Usuario registrado correctamente", Toast.LENGTH_SHORT).show()
+                                    saveUserToPreferences(uid)
+                                    startActivity(Intent(this, AddphotosActivity::class.java))
                                 }
                         }
                 }
@@ -160,6 +217,7 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
         }
+
 
         // Configurar los Spinners
         val genderOptions = arrayOf("Masculino", "Femenino", "Otro")
@@ -212,9 +270,94 @@ class LoginActivity : AppCompatActivity() {
         }, year, month, day).show()
     }
 
+    private fun addGroupToLayout(groupName: String, names: List<String>) {
+        val llInterestVertical: LinearLayout = findViewById(R.id.ll_interest_vertical)
+        val ivExpand: ImageView = findViewById(R.id.iv_expand)
+
+        // Crear el título para el grupo
+        val groupTitle = TextView(this).apply {
+            text = groupName  // El nombre del grupo
+            textSize = 18f
+            setTextColor(Color.BLACK)
+            setTypeface(null, Typeface.BOLD)
+        }
+        llInterestVertical.addView(groupTitle)
+
+        // Crear los TextViews para los primeros 4 intereses
+        val maxVisible = 4
+        for (i in 0 until minOf(names.size, maxVisible)) {
+            val interestTextView = TextView(this).apply {
+                text = names[i]  // El nombre del interés
+                textSize = 16f
+                setPadding(10, 10, 10, 10)
+                setTextColor(Color.BLACK)
+                setBackgroundResource(R.drawable.circle_background) // Fondo circular
+            }
+            llInterestVertical.addView(interestTextView)
+        }
+
+        // Crear los TextViews para los intereses adicionales (ocultos)
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            topMargin = 16  // Márgenes entre los grupos
+        }
+
+        for (i in maxVisible until names.size) {
+            val interestTextView = TextView(this).apply {
+                text = names[i]  // El nombre del interés
+                textSize = 16f
+                setPadding(10, 10, 10, 10)
+                setTextColor(Color.BLACK)
+                setBackgroundResource(R.drawable.circle_background) // Fondo circular
+            }
+            llInterestVertical.addView(interestTextView, params)
+        }
+
+        // Ocultar los intereses adicionales inicialmente
+        if (names.size > maxVisible) {
+            for (i in maxVisible until names.size) {
+                llInterestVertical.getChildAt(i).visibility = View.GONE
+            }
+        }
+
+        // Agregar la lógica para expandir/colapsar
+        ivExpand.setOnClickListener {
+            val isVisible = llInterestVertical.getChildAt(maxVisible).visibility == View.VISIBLE
+            for (i in maxVisible until names.size) {
+                llInterestVertical.getChildAt(i).visibility =
+                    if (isVisible) View.GONE else View.VISIBLE
+            }
+            ivExpand.rotation = if (isVisible) 0f else 180f // Rotar la flecha
+        }
+    }
+
+
+
+    private fun calculateAge(birthdate: String): Int {
+        val parts = birthdate.split("/")
+        if (parts.size != 3) return -1
+        val day = parts[0].toInt()
+        val month = parts[1].toInt()
+        val year = parts[2].toInt()
+
+        val today = Calendar.getInstance()
+        val dob = Calendar.getInstance()
+        dob.set(year, month - 1, day)
+
+        var age = today.get(Calendar.YEAR) - dob.get(Calendar.YEAR)
+        if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
+            age--
+        }
+        return age
+    }
+
+
     private fun saveUserToPreferences(userId: String) {
         val user = User(userId)
         val userPreferences = UserPreferences(this)
         userPreferences.saveUser(user)
     }
+
 }

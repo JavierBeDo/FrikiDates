@@ -411,6 +411,27 @@
                         android:text="Creatividad" />
                 </LinearLayout>
 
+                <TextView
+                    android:id="@+id/tv_interests_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="¿Cómo percibes el mundo?"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingTop="16dp" />
+
+                <LinearLayout
+                    android:id="@+id/ll_interests_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingBottom="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    />
+
+
                 <Button
                     android:id="@+id/btn_register"
                     android:layout_width="match_parent"
