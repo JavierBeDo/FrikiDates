@@ -6,12 +6,17 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import com.yuyakaido.android.cardstackview.CardStackLayoutManager
+import com.yuyakaido.android.cardstackview.CardStackView
 
 class MainMenuActivity : AppCompatActivity() {
 
     private lateinit var nav_profile: ImageView
     private lateinit var nav_chat: ImageView
     private lateinit var linearLayout_info: LinearLayout
+
+    val cardStackView = findViewById<CardStackView>(R.id.card_stack_view)
+    val manager = CardStackLayoutManager(this)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)

@@ -17,9 +17,9 @@
         android:text="FrikiDates"
         android:textSize="40sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Card info del perfil -->
     <androidx.cardview.widget.CardView
@@ -30,14 +30,15 @@
         android:layout_marginTop="15dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_app_title">
+        app:layout_constraintTop_toBottomOf="@id/tv_app_title"
+        app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
             android:id="@+id/linearLayout_info"
-            android:layout_width="190dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="8dp">
 
             <ImageView
                 android:id="@+id/imageView2"
@@ -85,27 +86,16 @@
     </androidx.cardview.widget.CardView>
 
     <!-- CardStackView para mostrar los perfiles -->
-    <!-- CardStackView para mostrar los perfiles -->
     <com.yuyakaido.android.cardstackview.CardStackView
-        android:id="@+id/cardStackView"
+        android:id="@+id/card_stack_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:padding="16dp"
-        app:layout_constrainedHeight="true"
-        app:layout_constrainedWidth="true"
+        app:layout_constraintTop_toBottomOf="@+id/card_profile_info"
         app:layout_constraintBottom_toTopOf="@+id/bottom_buttons"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_app_title"
-        app:layout_constraintVertical_bias="0.0"
-        app:layout_editor_absoluteX="0dp"
-        app:layout_editor_absoluteY="83dp"
-        app:layout_manager="com.yuyakaido.android.cardstackview.StackFromBottomManager"
-        app:swipe_direction="horizontal"
-        app:visible_count="3" /> <!-- Configura las propiedades según tus necesidades -->
-    <!-- Botones de acción (izquierda, no, sí) -->
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Botones de acción -->
     <LinearLayout
         android:id="@+id/bottom_buttons"
         android:layout_width="match_parent"
@@ -139,7 +129,6 @@
             android:src="@android:drawable/btn_star_big_on" />
     </LinearLayout>
 
-    <!-- Barra inferior de navegación -->
     <!-- Barra inferior de navegación -->
     <LinearLayout
         android:id="@+id/bottom_nav"
