@@ -2,26 +2,18 @@ package com.example.frikidates
 
 import android.app.DatePickerDialog
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Bundle
-import android.util.Log
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.ViewSwitcher
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QuerySnapshot
 import java.util.Calendar
 
 
@@ -42,16 +34,17 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var spinnerGender: Spinner
     private lateinit var spinnerGenderPref: Spinner
     private lateinit var seekBarAgeRange: SeekBar
+
+    private lateinit var seekBarDistancia: SeekBar
+    private lateinit var tvDistRangeMin: TextView
     private lateinit var tvAgeRangeMin: TextView
     private lateinit var tvAgeRangeMax: TextView
+
     private lateinit var btnRegister: Button
     private lateinit var tvGoToLogin: TextView
-    private lateinit var llMoreWords: LinearLayout
-    private lateinit var ivExpand: ImageView
     private lateinit var birthdateDisplay: TextView
     private lateinit var descEdit2 : EditText
-    private var isExpanded = false
-    private val db = FirebaseFirestore.getInstance()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,26 +61,6 @@ class LoginActivity : AppCompatActivity() {
         }
 
         val db = FirebaseFirestore.getInstance()
-        val interestsRef = db.collection("interests")
-
-        interestsRef.get().addOnCompleteListener { task: Task<QuerySnapshot> ->
-            if (task.isSuccessful) {
-                for (document in task.result) {
-                    // Obtener el grupo familiar
-                    val groupName = document.id
-                    val names =
-                        document["name"] as List<String>? // Asumiendo que los nombres están en un campo "name"
-
-                    // Llamar a la función para agregar el grupo y sus intereses
-                    if (names != null) {
-                        addGroupToLayout(groupName, names)
-                    }
-                }
-            } else {
-                Log.d("Firebase", "Error getting documents: ", task.exception)
-            }
-        }
-
 
 
         viewSwitcher = findViewById(R.id.viewSwitcher)
@@ -106,11 +79,10 @@ class LoginActivity : AppCompatActivity() {
         spinnerGenderPref = findViewById(R.id.spinner4)
         seekBarAgeRange = findViewById(R.id.seekBar)
         tvAgeRangeMin = findViewById(R.id.tv_edadmin)
+        tvDistRangeMin = findViewById(R.id.tvDistRangeMin)
         tvAgeRangeMax = findViewById(R.id.tv_edadmax)
         btnRegister = findViewById(R.id.btn_register)
         tvGoToLogin = findViewById(R.id.tv_go_to_login)
-        llMoreWords = findViewById(R.id.ll_more_words)
-        ivExpand = findViewById(R.id.iv_expand)
         birthdateDisplay = findViewById(R.id.birthdate_display)
         descEdit2 = findViewById(R.id.descEdit2)
 
@@ -127,7 +99,7 @@ class LoginActivity : AppCompatActivity() {
                 .addOnSuccessListener {
                     Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
                     saveUserToPreferences("ejemplo")
-                    startActivity(Intent(this, MainMenuActivity::class.java))
+                    startActivity(Intent(this, LoginInterestsActivity::class.java))
                     finish()
                 }
                 .addOnFailureListener { e ->
@@ -152,7 +124,7 @@ class LoginActivity : AppCompatActivity() {
             val password = etPassword_registrer.text.toString()
             val gender = spinnerGender.selectedItem.toString()
             val genderPref = spinnerGenderPref.selectedItem.toString()
-            val ageRange = "${tvAgeRangeMin.text}-${tvAgeRangeMax.text}"
+            val ageRange = "${tvAgeRangeMin.text}-99+"
             val birthdate = birthdateDisplay.text.toString()
             val desc = descEdit2.text.toString()
             val age = calculateAge(birthdate)
@@ -169,15 +141,6 @@ class LoginActivity : AppCompatActivity() {
                 .addOnSuccessListener { authResult ->
                     val uid = authResult.user?.uid ?: return@addOnSuccessListener
 
-                    // Recoger intereses seleccionados
-                    val intereses = mutableListOf<String>()
-                    for (i in 0 until llMoreWords.childCount) {
-                        val view = llMoreWords.getChildAt(i)
-                        if (view is TextView && view.currentTextColor == resources.getColor(R.color.verde_seleccionado)) {
-                            intereses.add(view.text.toString())
-                        }
-                    }
-
                     val profileId = "profile_$uid"
 
                     // Datos del documento user/{uid}
@@ -192,12 +155,10 @@ class LoginActivity : AppCompatActivity() {
                         "surname" to surname,
                         "email" to email,
                         "birthdate" to birthdate,
-                        "edad" to age,
                         "genero" to gender,
                         "preferenciaGenero" to genderPref,
                         "rangoEdadBuscado" to ageRange,
                         "distanciaMax" to 50,
-                        "intereses" to intereses,
                         "bio" to desc,
                         "imgUrl" to ""
                     )
@@ -209,7 +170,7 @@ class LoginActivity : AppCompatActivity() {
                                 .addOnSuccessListener {
                                     Toast.makeText(this, "Usuario registrado correctamente", Toast.LENGTH_SHORT).show()
                                     saveUserToPreferences(uid)
-                                    startActivity(Intent(this, AddphotosActivity::class.java))
+                                    startActivity(Intent(this, LoginInterestsActivity::class.java))
                                 }
                         }
                 }
@@ -226,35 +187,43 @@ class LoginActivity : AppCompatActivity() {
         spinnerGenderPref.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderPrefOptions)
 
         // Configurar el SeekBar de rango de edad
-        seekBarAgeRange.max = 81
-        seekBarAgeRange.progress = 18
+        seekBarAgeRange.max = 81 // Porque 99 - 18 = 81 posibles valores
+        seekBarAgeRange.progress = 0
         tvAgeRangeMin.text = "18"
         tvAgeRangeMax.text = "99+"
 
         seekBarAgeRange.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvAgeRangeMin.text = progress.toString()
-                tvAgeRangeMax.text = (99 - progress).toString()
+                val minAge = 18 + progress
+                tvAgeRangeMin.text = minAge.toString()
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        // Acción para desplegar el resto del LinearLayout
-        ivExpand.setOnClickListener {
-            if (isExpanded) {
-                llMoreWords.visibility = View.GONE
-                ivExpand.setImageResource(R.drawable.flecha)
-            } else {
-                llMoreWords.visibility = View.VISIBLE
-                ivExpand.setImageResource(R.drawable.flecha)
-            }
-            isExpanded = !isExpanded
-        }
+
 
         // Acción para mostrar el DatePickerDialog
         birthdateDisplay.setOnClickListener { showDatePickerDialog() }
+
+        seekBarDistancia = findViewById(R.id.seekBarDistancia)
+        tvDistRangeMin = findViewById(R.id.tvDistRangeMin)
+
+        seekBarDistancia.max = 195 // 200 - 5
+        seekBarDistancia.progress = 0
+        tvDistRangeMin.text = "5 km"
+
+        seekBarDistancia.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val distancia = 5 + progress
+                tvDistRangeMin.text = "$distancia km"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
     }
 
     private fun showDatePickerDialog() {
@@ -269,71 +238,6 @@ class LoginActivity : AppCompatActivity() {
             birthdateDisplay.text = date
         }, year, month, day).show()
     }
-
-    private fun addGroupToLayout(groupName: String, names: List<String>) {
-        val llInterestVertical: LinearLayout = findViewById(R.id.ll_interest_vertical)
-        val ivExpand: ImageView = findViewById(R.id.iv_expand)
-
-        // Crear el título para el grupo
-        val groupTitle = TextView(this).apply {
-            text = groupName  // El nombre del grupo
-            textSize = 18f
-            setTextColor(Color.BLACK)
-            setTypeface(null, Typeface.BOLD)
-        }
-        llInterestVertical.addView(groupTitle)
-
-        // Crear los TextViews para los primeros 4 intereses
-        val maxVisible = 4
-        for (i in 0 until minOf(names.size, maxVisible)) {
-            val interestTextView = TextView(this).apply {
-                text = names[i]  // El nombre del interés
-                textSize = 16f
-                setPadding(10, 10, 10, 10)
-                setTextColor(Color.BLACK)
-                setBackgroundResource(R.drawable.circle_background) // Fondo circular
-            }
-            llInterestVertical.addView(interestTextView)
-        }
-
-        // Crear los TextViews para los intereses adicionales (ocultos)
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-            topMargin = 16  // Márgenes entre los grupos
-        }
-
-        for (i in maxVisible until names.size) {
-            val interestTextView = TextView(this).apply {
-                text = names[i]  // El nombre del interés
-                textSize = 16f
-                setPadding(10, 10, 10, 10)
-                setTextColor(Color.BLACK)
-                setBackgroundResource(R.drawable.circle_background) // Fondo circular
-            }
-            llInterestVertical.addView(interestTextView, params)
-        }
-
-        // Ocultar los intereses adicionales inicialmente
-        if (names.size > maxVisible) {
-            for (i in maxVisible until names.size) {
-                llInterestVertical.getChildAt(i).visibility = View.GONE
-            }
-        }
-
-        // Agregar la lógica para expandir/colapsar
-        ivExpand.setOnClickListener {
-            val isVisible = llInterestVertical.getChildAt(maxVisible).visibility == View.VISIBLE
-            for (i in maxVisible until names.size) {
-                llInterestVertical.getChildAt(i).visibility =
-                    if (isVisible) View.GONE else View.VISIBLE
-            }
-            ivExpand.rotation = if (isVisible) 0f else 180f // Rotar la flecha
-        }
-    }
-
-
 
     private fun calculateAge(birthdate: String): Int {
         val parts = birthdate.split("/")
@@ -359,5 +263,4 @@ class LoginActivity : AppCompatActivity() {
         val userPreferences = UserPreferences(this)
         userPreferences.saveUser(user)
     }
-
 }

@@ -108,13 +108,13 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/tv_edadmax"
+                        android:id="@+id/tv_edadmin"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="18" />
 
                     <TextView
-                        android:id="@+id/tv_edadmin"
+                        android:id="@+id/tv_edadmax"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
@@ -152,24 +152,13 @@
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/tv_relacion"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Que tipo de relacion buscas?" />
-
-                <Spinner
-                    android:id="@+id/spinner5"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <TextView
                     android:id="@+id/tv_distancia"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Distancia maxima" />
 
                 <SeekBar
-                    android:id="@+id/seekBar3"
+                    android:id="@+id/seekBarDistancia"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
@@ -179,7 +168,7 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/tv_edadmax"
+                        android:id="@+id/tvDistRangeMin"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="5km" />
@@ -217,219 +206,6 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/descLabel" />
-
-                <TextView
-                    android:id="@+id/tv_how_i_perceive_world"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Cómo percibo el mundo"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/tv_observer"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Observador" />
-
-                    <TextView
-                        android:id="@+id/tv_analytic"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Analítico" />
-
-                    <TextView
-                        android:id="@+id/tv_versatile"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Versátil" />
-
-                    <TextView
-                        android:id="@+id/tv_proud"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Orgulloso" />
-
-                    <ImageView
-                        android:id="@+id/iv_expand"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginStart="8dp"
-                        android:contentDescription="Expand"
-                        android:src="@drawable/flecha" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/ll_more_words"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/tv_hope"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Esperanza" />
-
-                    <TextView
-                        android:id="@+id/tv_dreams"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Sueños" />
-
-                    <TextView
-                        android:id="@+id/tv_friendship"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Amistad" />
-
-                    <TextView
-                        android:id="@+id/tv_creativity"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Creatividad" />
-
-                </LinearLayout>
-
-
-                <TextView
-                    android:id="@+id/tv_how_i_perceive_world2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingTop="15dp"
-                    android:text="Cómo percibo el mundo"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/tv_observer"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Observador" />
-
-                    <TextView
-                        android:id="@+id/tv_analytic"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Analítico" />
-
-                    <TextView
-                        android:id="@+id/tv_versatile"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Versátil" />
-
-                    <TextView
-                        android:id="@+id/tv_proud"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Orgulloso" />
-
-                    <ImageView
-                        android:id="@+id/iv_expand"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginStart="8dp"
-                        android:contentDescription="Expand"
-                        android:src="@drawable/flecha" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/ll_more_words"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/tv_hope"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Esperanza" />
-
-                    <TextView
-                        android:id="@+id/tv_dreams"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Sueños" />
-
-                    <TextView
-                        android:id="@+id/tv_friendship"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Amistad" />
-
-                    <TextView
-                        android:id="@+id/tv_creativity"
-                        android:layout_width="68dp"
-                        android:layout_height="32dp"
-                        android:background="@drawable/circle_background"
-                        android:padding="8dp"
-                        android:text="Creatividad" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tv_interests_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="¿Cómo percibes el mundo?"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:paddingTop="16dp" />
-
-                <LinearLayout
-                    android:id="@+id/ll_interests_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingBottom="16dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    />
 
 
                 <Button

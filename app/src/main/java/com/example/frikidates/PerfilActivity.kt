@@ -46,6 +46,7 @@ class PerfilActivity : AppCompatActivity() {
     private lateinit var notificationCheckBox: CheckBox
     private var user: User? = null
 
+
     private val REQUEST_CODE_GALLERY = 1001
     private val REQUEST_CODE_CAMERA = 1002
     private val REQUEST_CODE_STORAGE_PERMISSION = 1003
@@ -77,6 +78,8 @@ class PerfilActivity : AppCompatActivity() {
         genderSpinner = findViewById(R.id.genderSpinner)
         findSpinner = findViewById(R.id.findSpinner)
         notificationCheckBox = findViewById(R.id.notificationCheckBox)
+
+
         loadUserImages()
         loadUserInfo()
         loadGenders()
