@@ -39,11 +39,11 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Name:\nEdad:\nGénero:\nUbicación: No modificable"
+                android:text="Name:\nEdad:\nGénero:"
                 android:textSize="16sp"
-                app:layout_constraintTop_toBottomOf="@id/appTitle"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintTop_toBottomOf="@id/appTitle" />
 
             <!-- Galería de fotos -->
             <GridLayout
@@ -142,77 +142,99 @@
                 app:layout_constraintEnd_toEndOf="parent" />
 
             <!-- Género buscado -->
+
             <TextView
                 android:id="@+id/genderLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="¿Que genero eres?"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/genderLabel2" />
+
+            <TextView
+                android:id="@+id/genderLabel2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:text="¿Qué género buscas?"
                 android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@id/descEdit"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/descEdit" />
 
+            <!-- Relación buscada -->
+
+            <!-- Personalidad (cargada dinámicamente) -->
+
+            <!-- Aquí puedes cargar la personalidad -->
+
+
+            <!-- Notificaciones -->
             <Spinner
                 android:id="@+id/genderSpinner"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
-                android:layout_marginStart="20dp"
-                app:layout_constraintTop_toTopOf="@+id/genderLabel"
+                android:layout_marginStart="32dp"
                 app:layout_constraintBottom_toBottomOf="@+id/genderLabel"
-                app:layout_constraintStart_toEndOf="@+id/genderLabel" />
-
-            <!-- Relación buscada -->
-            <TextView
-                android:id="@+id/relationLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                android:text="¿Qué tipo de relación buscas?"
-                android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@id/genderLabel"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toEndOf="@+id/genderLabel"
+                app:layout_constraintTop_toTopOf="@+id/genderLabel"
+                app:layout_constraintVertical_bias="0.0" />
 
             <Spinner
-                android:id="@+id/findSpinner"
+                android:id="@+id/genderSpinner2"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
-                android:layout_marginStart="16dp"
-                app:layout_constraintTop_toTopOf="@+id/relationLabel"
-                app:layout_constraintBottom_toBottomOf="@+id/relationLabel"
-                app:layout_constraintStart_toEndOf="@+id/relationLabel" />
+                android:layout_marginStart="32dp"
+                app:layout_constraintBottom_toBottomOf="@+id/genderLabel2"
+                app:layout_constraintStart_toEndOf="@+id/genderLabel"
+                app:layout_constraintTop_toTopOf="@+id/genderLabel2" />
 
-            <!-- Personalidad (cargada dinámicamente) -->
-            <TextView
-                android:id="@+id/personalidadLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Personalidad:"
-                android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@+id/relationLabel"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <!-- Aquí puedes cargar la personalidad dinámicamente en código con otro TextView si lo deseas -->
-
-            <!-- Notificaciones -->
             <TextView
                 android:id="@+id/notificacionesLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="30dp"
                 android:text="Notificaciones"
                 android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@+id/personalidadLabel"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/genderLabel" />
 
             <CheckBox
                 android:id="@+id/notificationCheckBox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                app:layout_constraintTop_toTopOf="@+id/notificacionesLabel"
                 app:layout_constraintBottom_toBottomOf="@+id/notificacionesLabel"
-                app:layout_constraintStart_toEndOf="@+id/notificacionesLabel" />
+                app:layout_constraintStart_toEndOf="@+id/notificacionesLabel"
+                app:layout_constraintTop_toTopOf="@+id/notificacionesLabel" />
+
+            <TextView
+                android:id="@+id/personalidadLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="Personalidad:"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/notificacionesLabel" />
+
+            <LinearLayout
+                android:id="@+id/ll_interest_vertical"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="-10dp"
+                android:layout_marginBottom="40dp"
+                android:orientation="vertical"
+                android:padding="8dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/personalidadLabel">
+
+                <!-- Los elementos se agregarán dinámicamente desde Kotlin -->
+            </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

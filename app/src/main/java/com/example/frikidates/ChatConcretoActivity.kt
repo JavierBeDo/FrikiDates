@@ -2,7 +2,6 @@ package com.example.frikidates
 
 import MensajeEnviar
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.EditText
@@ -11,6 +10,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FieldValue
@@ -26,8 +26,8 @@ class ChatConcretoActivity : AppCompatActivity() {
     private lateinit var rvMensajes: RecyclerView
     private lateinit var txtMensaje: EditText
     private lateinit var btnEnviar: ImageButton
-    private lateinit var adapter: AdapterMensajes
     private lateinit var btnEnviarFoto: ImageButton
+    private lateinit var adapter: AdapterMensajes
 
     private val PHOTO_SEND = 1
     private val PHOTO_PERFIL = 2
@@ -36,135 +36,128 @@ class ChatConcretoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chats_concretos)
 
-        fotoPerfil = findViewById(R.id.profile_image_2)
-        nombre = findViewById(R.id.username)
-        rvMensajes = findViewById(R.id.rvMensajes)
-        txtMensaje = findViewById(R.id.message_input)
-        btnEnviar = findViewById(R.id.send_button)
-        btnEnviarFoto = findViewById(R.id.btnEnviarFoto)
+        // ==== Vistas ====
+        fotoPerfil   = findViewById(R.id.profile_image_2)
+        nombre       = findViewById(R.id.username)
+        rvMensajes   = findViewById(R.id.rvMensajes)
+        txtMensaje   = findViewById(R.id.message_input)
+        btnEnviar    = findViewById(R.id.send_button)
+        btnEnviarFoto= findViewById(R.id.btnEnviarFoto)
 
-        adapter = AdapterMensajes(this)
-        rvMensajes.layoutManager = LinearLayoutManager(this)
+        // ==== Preparar Recycler + Adapter ====
+        val senderId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        adapter = AdapterMensajes(this, senderId)
+        val lm = LinearLayoutManager(this).apply { stackFromEnd = true }
+        rvMensajes.layoutManager = lm
         rvMensajes.adapter = adapter
 
+        // Dentro de onCreate, después de recibir matchId:
         val matchId = intent.getStringExtra("matchId") ?: "match_1"
         val db = FirebaseFirestore.getInstance()
-        val senderId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
+// Obtener el matchedUserId desde el documento del match
+        db.collection("matches")
+            .document(matchId)
+            .get()
+            .addOnSuccessListener { matchDoc ->
+                val matchedUserId = matchDoc.getString("matchedUserId") ?: return@addOnSuccessListener
+
+                // === 1. Obtener nombre del usuario ===
+                db.collection("profiles")
+                    .document(matchedUserId)
+                    .get()
+                    .addOnSuccessListener { profileDoc ->
+                        val nombreReal = profileDoc.getString("name") ?: "Usuario"
+                        nombre.text = nombreReal
+
+                        // === 2. Obtener imagen de perfil ===
+                        // Eliminar el prefijo "profile_" para acceder al storage
+                        val folderName = matchedUserId.removePrefix("profile_")
+                        val storageRef = FirebaseStorage.getInstance().reference.child(folderName)
+
+                        storageRef.listAll()
+                            .addOnSuccessListener { result ->
+                                val primeraImagen = result.items.firstOrNull()
+                                if (primeraImagen != null) {
+                                    primeraImagen.downloadUrl.addOnSuccessListener { uri ->
+                                        Glide.with(this)
+                                            .load(uri)
+                                            .placeholder(R.drawable.default_avatar)
+                                            .circleCrop()
+                                            .into(fotoPerfil)
+                                    }
+                                } else {
+                                    fotoPerfil.setImageResource(R.drawable.default_avatar)
+                                }
+                            }
+                            .addOnFailureListener {
+                                fotoPerfil.setImageResource(R.drawable.default_avatar)
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("ChatConcreto", "Error obteniendo perfil: ${e.message}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ChatConcreto", "Error obteniendo matchedUserId: ${e.message}")
+            }
+
+
+        // ==== 2) Envío de texto ====
         btnEnviar.setOnClickListener {
             val mensajeTexto = txtMensaje.text.toString().trim()
             if (mensajeTexto.isNotEmpty()) {
-
                 val mensaje = MensajeEnviar(
                     senderId = senderId,
-                    text = mensajeTexto,
+                    text      = mensajeTexto,
                     timestamp = FieldValue.serverTimestamp(),
-                    type = "text"
+                    type      = "text"
                 )
-
                 db.collection("matches")
                     .document(matchId)
                     .collection("messages")
                     .document("mensaje_${System.currentTimeMillis()}")
                     .set(mensaje)
-                    .addOnSuccessListener {
-                        txtMensaje.text.clear()
-                    }
-                    .addOnFailureListener {
-                        Log.e("ChatConcreto", "Error al enviar mensaje: ${it.message}")
+                    .addOnSuccessListener { txtMensaje.text.clear() }
+                    .addOnFailureListener { e ->
+                        Log.e("ChatConcreto", "Error enviando mensaje: ${e.message}")
                     }
             }
         }
 
+        // ==== 3) Envío de foto ====
         btnEnviarFoto.setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "image/jpeg"
-                putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+                type = "image/jpeg"; putExtra(Intent.EXTRA_LOCAL_ONLY, true)
             }
-            startActivityForResult(Intent.createChooser(intent, "Selecciona una foto"), PHOTO_SEND)
+            startActivityForResult(
+                Intent.createChooser(intent, "Selecciona una foto"), PHOTO_SEND
+            )
         }
 
-        fotoPerfil.setOnClickListener {
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "image/jpeg"
-                putExtra(Intent.EXTRA_LOCAL_ONLY, true)
-            }
-            startActivityForResult(Intent.createChooser(intent, "Selecciona una foto"), PHOTO_PERFIL)
-        }
-
-        adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
-            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                super.onItemRangeInserted(positionStart, itemCount)
-                setScrollbar()
-            }
-        })
-
+        // ==== 4) Listener de nuevos mensajes ====
         db.collection("matches")
             .document(matchId)
             .collection("messages")
             .orderBy("timestamp", Query.Direction.ASCENDING)
-            .addSnapshotListener { snapshots, error ->
+            .addSnapshotListener { snaps, error ->
                 if (error != null) {
                     Log.e("ChatConcreto", "Error escuchando mensajes: ${error.message}")
                     return@addSnapshotListener
                 }
-
-                for (doc in snapshots!!.documentChanges) {
-                    val mensaje = doc.document.toObject(MensajeRecibir::class.java)
-                    if (doc.type == DocumentChange.Type.ADDED) {
-                        adapter.addMensaje(mensaje)
+                for (dc in snaps!!.documentChanges) {
+                    if (dc.type == DocumentChange.Type.ADDED) {
+                        val msg = dc.document.toObject(MensajeRecibir::class.java)
+                        adapter.addMensaje(msg)
                     }
                 }
             }
+
+        adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeInserted(posStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(posStart, itemCount)
+                rvMensajes.scrollToPosition(adapter.itemCount - 1)
+            }
+        })
     }
-
-    private fun setScrollbar() {
-        rvMensajes.scrollToPosition(adapter.itemCount - 1)
-    }
-
-    /* override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PHOTO_SEND && resultCode == RESULT_OK) {
-            val uri = data?.data
-            enviarFoto(uri)
-        } else if (requestCode == PHOTO_PERFIL && resultCode == RESULT_OK) {
-            val uri = data?.data
-            // Aquí puedes manejar la lógica para actualizar la foto de perfil
-        }
-    }
-
-    private fun enviarFoto(uri: Uri?) {
-        val matchId = intent.getStringExtra("matchId") ?: return
-        val senderId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-        uri?.let { imageUri ->
-            val storageReference = FirebaseStorage.getInstance().reference.child("imagenes/${System.currentTimeMillis()}.jpg")
-
-            storageReference.putFile(imageUri)
-                .addOnSuccessListener {
-                    storageReference.downloadUrl.addOnSuccessListener { downloadUri ->
-                        val timestamp = System.currentTimeMillis()
-                        val mensajeId = "mensaje_$timestamp"
-                        val db = FirebaseFirestore.getInstance()
-
-                        val mensaje = hashMapOf(
-                            "senderId" to senderId,
-                            "text" to downloadUri.toString(),
-                            "timestamp" to FieldValue.serverTimestamp(),
-                            "type" to "image"
-                        )
-
-                        db.collection("matches")
-                            .document(matchId)
-                            .collection("messages")
-                            .document(mensajeId)
-                            .set(mensaje)
-                    }
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("ChatConcretoActivity", "Error al subir la imagen: ${exception.message}")
-                }
-        }
-    }
-    */
 }

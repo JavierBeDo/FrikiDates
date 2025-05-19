@@ -1,6 +1,7 @@
 package com.example.frikidates
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,6 +16,7 @@ import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -22,15 +24,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
+import com.example.frikidates.utils.InterestManager
 import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
+import java.time.LocalDate
+import java.time.Period
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class PerfilActivity : AppCompatActivity() {
 
+
+    private lateinit var interestManager: InterestManager
     private lateinit var nav_profile: ImageView
     private lateinit var nav_search: ImageView
     private lateinit var imageView1: ImageView
@@ -42,7 +51,6 @@ class PerfilActivity : AppCompatActivity() {
     private lateinit var iv_camera: ImageView
     private lateinit var descEdit: EditText
     private lateinit var genderSpinner: Spinner
-    private lateinit var findSpinner: Spinner
     private lateinit var notificationCheckBox: CheckBox
     private var user: User? = null
 
@@ -56,9 +64,13 @@ class PerfilActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private lateinit var userPreferences: UserPreferences
 
+    @SuppressLint("CutPasteId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_perfil)
+
+        val layout = findViewById<LinearLayout>(R.id.ll_interest_vertical)
+        interestManager = InterestManager(this, layout)
 
         userPreferences = UserPreferences(this)
 
@@ -76,7 +88,6 @@ class PerfilActivity : AppCompatActivity() {
         iv_camera = findViewById(R.id.iv_camera)
         descEdit = findViewById(R.id.descEdit)
         genderSpinner = findViewById(R.id.genderSpinner)
-        findSpinner = findViewById(R.id.findSpinner)
         notificationCheckBox = findViewById(R.id.notificationCheckBox)
 
 
@@ -84,7 +95,8 @@ class PerfilActivity : AppCompatActivity() {
         loadUserInfo()
         loadGenders()
         loadNotificationSettings()
-        loadInterests()
+        interestManager = InterestManager(this, findViewById(R.id.ll_interest_vertical))
+        interestManager.loadAndDisplayInterests()
 
         nav_profile.setOnClickListener {
             updateDescriptionInDatabase(descEdit.text.toString())
@@ -260,19 +272,27 @@ class PerfilActivity : AppCompatActivity() {
 
     private fun loadUserInfo() {
 
-        user?.let {
-            db.collection("user").document(it.userId)
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            Toast.makeText(this, "Error: usuario no autenticado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+            val profileId = "profile_$uid"
+            db.collection("profiles").document(profileId)
                 .get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
                         val name = document.getString("name") // Obtén el nombre del documento
-                        val age = document.getString("age") // Suponiendo que también tienes la edad
-                        val gender = document.getString("gender") // Y el género
-                        val location = document.getString("location") // Y la ubicación
-                        val description = document.getString("descripcion") // Y la descripcion
+                        val birthdate = document.getString("birthdate") // Suponiendo que también tienes la edad
+                        val gender = document.getString("genero") // Y el género
+                        val description = document.getString("bio") // Y la descripcion
+                        val surname =  document.getString("surname") // Y el surname
+                        val edad = birthdate?.let { calcularEdad(it) } ?: "Desconocida"
 
                         // Actualiza el TextView
-                        val userInfoText = "Name: $name\nEdad: $age\nGénero: $gender\nUbicación: $location"
+                        val userInfoText = "Name: $name\nSurname: $surname\nEdad: $edad\nGénero: $gender"
                         findViewById<TextView>(R.id.userInfo).text = userInfoText
                         descEdit.setText(description)
 
@@ -283,14 +303,14 @@ class PerfilActivity : AppCompatActivity() {
                 .addOnFailureListener { exception ->
                     Log.e("Firestore", "Error getting documents: ", exception)
                 }
-        }
     }
 
     // Método para actualizar la descripción en la base de datos
     private fun updateDescriptionInDatabase(description: String) {
         user?.let { currentUser ->
-            db.collection("user").document(currentUser.userId)
-                .update("descripcion", description)
+            val profileId = "profile_${currentUser.userId}"
+            db.collection("profiles").document(profileId)
+                .update("bio", description)
                 .addOnSuccessListener {
                     Log.d("Firestore", "Descripción actualizada correctamente")
                 }
@@ -338,11 +358,12 @@ class PerfilActivity : AppCompatActivity() {
 
     private fun setDefaultGender(genders: List<String>) {
         user?.let { currentUser ->
-            db.collection("user").document(currentUser.userId)
+            val profileId = "profile_${currentUser.userId}"
+            db.collection("profiles").document(profileId)
                 .get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
-                        val userGender = document.getString("genderFind")
+                        val userGender = document.getString("preferenciaGenero")
                         userGender?.let {
                             val position = genders.indexOf(it)
                             if (position >= 0) {
@@ -359,8 +380,9 @@ class PerfilActivity : AppCompatActivity() {
 
     private fun addUserGenderToDatabase(gender: String) {
         user?.let { currentUser ->
-            db.collection("user").document(currentUser.userId)
-                .update("genderFind", gender)
+            val profileId = "profile_${currentUser.userId}"
+            db.collection("profiles").document(profileId)
+                .update("preferenciaGenero", gender)
                 .addOnSuccessListener {
                     Log.d("Firestore", "Género actualizado correctamente a $gender")
                 }
@@ -370,37 +392,46 @@ class PerfilActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadNotificationSettings() {
-        user?.let { currentUser ->
-            db.collection("user").document(currentUser.userId)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document != null) {
-                        val notificationsEnabled = document.getBoolean("notificaciones") ?: false
-                        notificationCheckBox.isChecked = notificationsEnabled
+        private fun loadNotificationSettings() {
+            user?.let { currentUser ->
+                val profileId = "profile_${currentUser.userId}"
+                db.collection("profiles").document(profileId)
+                    .get()
+                    .addOnSuccessListener { document ->
+                        if (document != null) {
+                            val notificationsEnabled = document.getBoolean("notificaciones") ?: false
+                            notificationCheckBox.isChecked = notificationsEnabled
+                        }
                     }
-                }
-                .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error al cargar la configuración de notificaciones", e)
-                }
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Error al cargar la configuración de notificaciones", e)
+                    }
+            }
         }
-    }
 
 
-    private fun updateNotificationSettingsInDatabase(enabled: Boolean) {
-        user?.let { currentUser ->
-            db.collection("user").document(currentUser.userId)
-                .update("notificaciones", enabled)
-                .addOnSuccessListener {
-                    Log.d("Firestore", "Configuración de notificaciones actualizada a $enabled")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error al actualizar la configuración de notificaciones", e)
-                }
+        private fun updateNotificationSettingsInDatabase(enabled: Boolean) {
+            user?.let { currentUser ->
+                val profileId = "profile_${currentUser.userId}"
+                db.collection("profiles").document(profileId)
+                    .update("notificaciones", enabled)
+                    .addOnSuccessListener {
+                        Log.d("Firestore", "Configuración de notificaciones actualizada a $enabled")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Error al actualizar la configuración de notificaciones", e)
+                    }
+            }
         }
-    }
 
+    fun calcularEdad(fechaNacimiento: String): Int {
+            val formatter = DateTimeFormatter.ofPattern("d/M/yyyy")
+            val fechaNacimiento = LocalDate.parse(fechaNacimiento, formatter)
+            val hoy = LocalDate.now()
+            return Period.between(fechaNacimiento, hoy).years
+        }
 
+/*
     // Método para cargar intereses desde el documento "que_estoy_buscando"
     private fun loadInterests() {
         db.collection("interests").document("que_estoy_buscando")
@@ -440,23 +471,6 @@ class PerfilActivity : AppCompatActivity() {
             }
             .addOnFailureListener { e ->
                 Log.e("Firestore", "Error al cargar intereses", e)
-            }
-    }
-
-    // Método para actualizar intereses en el documento "que_estoy_buscando"
-//    private fun updateInterests(newInterests: String) {
-//        user?.let { currentUser ->
-//            db.collection("user").document(currentUser.userId)
-//                .update("FindInterests", gender)
-//                .addOnSuccessListener {
-//                    Log.d("Firestore", "Género actualizado correctamente a $gender")
-//                }
-//                .addOnFailureListener { e ->
-//                    Log.e("Firestore", "Error al actualizar el género", e)
-//                }
-//        }
-//    }
-
-
+            } */
 
 }

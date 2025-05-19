@@ -96,15 +96,45 @@ class LoginActivity : AppCompatActivity() {
             }
 
             mAuth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
-                    saveUserToPreferences("ejemplo")
-                    startActivity(Intent(this, LoginInterestsActivity::class.java))
-                    finish()
+                .addOnSuccessListener { authResult ->
+                    val uid = authResult.user?.uid ?: return@addOnSuccessListener
+
+                    val db = FirebaseFirestore.getInstance()
+
+                    // Recuperar el documento del usuario para extraer el profileId (solo el ID, sin la ruta completa)
+                    db.collection("user").document(uid).get()
+                        .addOnSuccessListener { userDoc ->
+                            val profileId = userDoc.getString("profileId") // Ejemplo: "profile_lzS2rkMz..."
+
+                            if (profileId != null) {
+                                // Obtener los datos del perfil
+                                db.collection("profiles").document(profileId).get()
+                                    .addOnSuccessListener { profileDoc ->
+                                        if (profileDoc.exists()) {
+                                            Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+                                            saveUserToPreferences(uid)
+                                            startActivity(Intent(this, LoginInterestsActivity::class.java))
+                                            finish()
+                                        } else {
+                                            Toast.makeText(this, "Perfil no encontrado", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(this, "Error al obtener perfil: ${e.message}", Toast.LENGTH_LONG).show()
+                                    }
+                            } else {
+                                Toast.makeText(this, "No se encontró el ID del perfil", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Error al obtener usuario: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
+
+
         }
 
         // Acción para cambiar a la vista de registro
@@ -146,7 +176,7 @@ class LoginActivity : AppCompatActivity() {
                     // Datos del documento user/{uid}
                     val userData = hashMapOf(
                         "status" to "active",
-                        "profileId" to "profiles/$profileId"
+                        "profileId" to profileId // ✅ Solo el ID, sin "profiles/"
                     )
 
                     // Datos del documento profiles/profile_$uid
@@ -160,7 +190,8 @@ class LoginActivity : AppCompatActivity() {
                         "rangoEdadBuscado" to ageRange,
                         "distanciaMax" to 50,
                         "bio" to desc,
-                        "imgUrl" to ""
+                        "imgUrl" to "",
+                        "notificaciones" to true
                     )
 
                     // Guardar en Firestore
