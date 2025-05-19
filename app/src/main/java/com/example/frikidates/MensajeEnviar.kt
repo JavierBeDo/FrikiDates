@@ -1,20 +1,8 @@
-package com.example.frikidates
+import com.google.firebase.firestore.FieldValue
 
 data class MensajeEnviar(
-    var hora: Map<String, Any>? = null
-) : Mensaje() {
-
-    constructor(
-        mensaje: String?,
-        nombre: String?,
-        fotoPerfil: String?,
-        type_mensaje: String?,
-        hora: Map<String, Any>?
-    ) : this(hora) {
-        this.mensaje = mensaje
-        this.nombre = nombre
-        this.fotoPerfil = fotoPerfil
-        this.type_mensaje = type_mensaje
-    }
-
-}
+    val senderId: String = "",
+    val text: String = "",
+    val timestamp: Any = FieldValue.serverTimestamp(),
+    val type: String = "text"
+)

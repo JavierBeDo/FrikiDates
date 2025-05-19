@@ -1,14 +1,22 @@
 package com.example.frikidates
 
+import MensajeEnviar
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.database.ServerValue
+import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
 import de.hdodenhof.circleimageview.CircleImageView
 
 class ChatConcretoActivity : AppCompatActivity() {
@@ -18,83 +26,138 @@ class ChatConcretoActivity : AppCompatActivity() {
     private lateinit var rvMensajes: RecyclerView
     private lateinit var txtMensaje: EditText
     private lateinit var btnEnviar: ImageButton
-    private lateinit var adapter: AdapterMensajes
     private lateinit var btnEnviarFoto: ImageButton
+    private lateinit var adapter: AdapterMensajes
 
     private val PHOTO_SEND = 1
     private val PHOTO_PERFIL = 2
-    private var fotoPerfilCadena = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chats_concretos)
 
-        fotoPerfil = findViewById(R.id.profile_image_2) // ID actualizado
-        nombre = findViewById(R.id.username) // ID actualizado
-        rvMensajes = findViewById(R.id.rvMensajes) // Asegúrate de que este ID sigue siendo válido
-        txtMensaje = findViewById(R.id.message_input) // ID actualizado
-        btnEnviar = findViewById(R.id.send_button) // ID actualizado
-        btnEnviarFoto = findViewById(R.id.btnEnviarFoto) // Asegúrate de que este ID es correcto
+        // ==== Vistas ====
+        fotoPerfil   = findViewById(R.id.profile_image_2)
+        nombre       = findViewById(R.id.username)
+        rvMensajes   = findViewById(R.id.rvMensajes)
+        txtMensaje   = findViewById(R.id.message_input)
+        btnEnviar    = findViewById(R.id.send_button)
+        btnEnviarFoto= findViewById(R.id.btnEnviarFoto)
 
-        adapter = AdapterMensajes(this)
-        val layoutManager = LinearLayoutManager(this)
-        rvMensajes.layoutManager = layoutManager
+        // ==== Preparar Recycler + Adapter ====
+        val senderId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        adapter = AdapterMensajes(this, senderId)
+        val lm = LinearLayoutManager(this).apply { stackFromEnd = true }
+        rvMensajes.layoutManager = lm
         rvMensajes.adapter = adapter
 
+        // Dentro de onCreate, después de recibir matchId:
+        val matchId = intent.getStringExtra("matchId") ?: "match_1"
+        val db = FirebaseFirestore.getInstance()
+
+// Obtener el matchedUserId desde el documento del match
+        db.collection("matches")
+            .document(matchId)
+            .get()
+            .addOnSuccessListener { matchDoc ->
+                val matchedUserId = matchDoc.getString("matchedUserId") ?: return@addOnSuccessListener
+
+                // === 1. Obtener nombre del usuario ===
+                db.collection("profiles")
+                    .document(matchedUserId)
+                    .get()
+                    .addOnSuccessListener { profileDoc ->
+                        val nombreReal = profileDoc.getString("name") ?: "Usuario"
+                        nombre.text = nombreReal
+
+                        // === 2. Obtener imagen de perfil ===
+                        // Eliminar el prefijo "profile_" para acceder al storage
+                        val folderName = matchedUserId.removePrefix("profile_")
+                        val storageRef = FirebaseStorage.getInstance().reference.child(folderName)
+
+                        storageRef.listAll()
+                            .addOnSuccessListener { result ->
+                                val primeraImagen = result.items.firstOrNull()
+                                if (primeraImagen != null) {
+                                    primeraImagen.downloadUrl.addOnSuccessListener { uri ->
+                                        Glide.with(this)
+                                            .load(uri)
+                                            .placeholder(R.drawable.default_avatar)
+                                            .circleCrop()
+                                            .into(fotoPerfil)
+                                    }
+                                } else {
+                                    fotoPerfil.setImageResource(R.drawable.default_avatar)
+                                }
+                            }
+                            .addOnFailureListener {
+                                fotoPerfil.setImageResource(R.drawable.default_avatar)
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("ChatConcreto", "Error obteniendo perfil: ${e.message}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ChatConcreto", "Error obteniendo matchedUserId: ${e.message}")
+            }
+
+
+        // ==== 2) Envío de texto ====
         btnEnviar.setOnClickListener {
-            val mensajeTexto = txtMensaje.text.toString()
+            val mensajeTexto = txtMensaje.text.toString().trim()
             if (mensajeTexto.isNotEmpty()) {
-                val timestampLocal = System.currentTimeMillis() // Obtén el timestamp local
-                val mensajeEnviar = MensajeEnviar(
-                    mensajeTexto,
-                    nombre.text.toString(),
-                    fotoPerfilCadena,
-                    "1",
-                    mapOf("timestamp" to timestampLocal) // Usa un mapa con el timestamp local
+                val mensaje = MensajeEnviar(
+                    senderId = senderId,
+                    text      = mensajeTexto,
+                    timestamp = FieldValue.serverTimestamp(),
+                    type      = "text"
                 )
-                // databaseReference.push().setValue(mensajeEnviar)
-                adapter.addMensaje(mensajeEnviar)
-                txtMensaje.text.clear()
+                db.collection("matches")
+                    .document(matchId)
+                    .collection("messages")
+                    .document("mensaje_${System.currentTimeMillis()}")
+                    .set(mensaje)
+                    .addOnSuccessListener { txtMensaje.text.clear() }
+                    .addOnFailureListener { e ->
+                        Log.e("ChatConcreto", "Error enviando mensaje: ${e.message}")
+                    }
             }
         }
 
+        // ==== 3) Envío de foto ====
         btnEnviarFoto.setOnClickListener {
-            val i = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "image/jpeg"
-                putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "image/jpeg"; putExtra(Intent.EXTRA_LOCAL_ONLY, true)
             }
-            startActivityForResult(Intent.createChooser(i, "Selecciona una foto"), PHOTO_SEND)
+            startActivityForResult(
+                Intent.createChooser(intent, "Selecciona una foto"), PHOTO_SEND
+            )
         }
 
-        fotoPerfil.setOnClickListener {
-            val i = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "image/jpeg"
-                putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+        // ==== 4) Listener de nuevos mensajes ====
+        db.collection("matches")
+            .document(matchId)
+            .collection("messages")
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snaps, error ->
+                if (error != null) {
+                    Log.e("ChatConcreto", "Error escuchando mensajes: ${error.message}")
+                    return@addSnapshotListener
+                }
+                for (dc in snaps!!.documentChanges) {
+                    if (dc.type == DocumentChange.Type.ADDED) {
+                        val msg = dc.document.toObject(MensajeRecibir::class.java)
+                        adapter.addMensaje(msg)
+                    }
+                }
             }
-            startActivityForResult(Intent.createChooser(i, "Selecciona una foto"), PHOTO_PERFIL)
-        }
 
         adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
-            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                super.onItemRangeInserted(positionStart, itemCount)
-                setScrollbar()
+            override fun onItemRangeInserted(posStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(posStart, itemCount)
+                rvMensajes.scrollToPosition(adapter.itemCount - 1)
             }
         })
-    }
-
-    private fun setScrollbar() {
-        rvMensajes.scrollToPosition(adapter.itemCount - 1)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        // Manejo de resultados para fotos enviadas y perfil
-        if (requestCode == PHOTO_SEND && resultCode == RESULT_OK) {
-            val u = data?.data
-            // Aquí puedes manejar la lógica para enviar la foto
-        } else if (requestCode == PHOTO_PERFIL && resultCode == RESULT_OK) {
-            val u = data?.data
-            // Aquí puedes manejar la lógica para actualizar la foto de perfil
-        }
     }
 }

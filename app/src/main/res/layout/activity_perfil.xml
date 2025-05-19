@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Scrollable content -->
+    <!-- ScrollView para contenido desplazable -->
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="0dp"
@@ -22,9 +22,6 @@
             android:layout_height="wrap_content"
             android:padding="16dp">
 
-            <!-- Todo tu contenido anterior aquí -->
-            <!-- PEGA desde el TextView appTitle hasta el EditText descEdit -->
-
             <!-- Título -->
             <TextView
                 android:id="@+id/appTitle"
@@ -33,193 +30,211 @@
                 android:text="FrikiDates"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                tools:layout_editor_absoluteY="16dp" />
 
             <!-- Información de usuario -->
             <TextView
                 android:id="@+id/userInfo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Name:\nEdad:\nGénero:\nUbicación: No modificable"
-                android:textSize="16sp"
-                app:layout_constraintTop_toBottomOf="@id/appTitle"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="16dp" />
-
-            <!-- ... Las seis imágenes ... -->
-            <!-- ... Copia y pega aquí las seis ImageView y las vistas siguientes ... -->
-
-            <!-- Imagen fila 1 -->
-            <ImageView
-                android:id="@+id/img1"
-                android:src="@drawable/landscapeplaceholder"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
                 android:layout_marginTop="16dp"
-                android:scaleType="centerCrop"
-                android:background="#CCCCCC"
+                android:text="Name:\nEdad:\nGénero:"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/appTitle" />
+
+            <!-- Galería de fotos -->
+            <GridLayout
+                android:id="@+id/gridLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:columnCount="3"
+                android:rowCount="2"
+                android:layout_marginTop="16dp"
                 app:layout_constraintTop_toBottomOf="@id/userInfo"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/img2"
-                app:layout_constraintWidth_percent="0.3"/>
+                app:layout_constraintEnd_toEndOf="parent">
 
-            <ImageView
-                android:id="@+id/img2"
-                android:src="@drawable/landscapeplaceholder"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_marginTop="16dp"
-                android:scaleType="centerCrop"
-                android:background="#CCCCCC"
-                app:layout_constraintTop_toTopOf="@id/img1"
-                app:layout_constraintStart_toEndOf="@id/img1"
-                app:layout_constraintEnd_toStartOf="@id/img3"
-                app:layout_constraintWidth_percent="0.3"/>
+                <ImageView
+                    android:id="@+id/img1"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
+                    android:layout_margin="8dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/landscapeplaceholder" />
 
-            <ImageView
-                android:id="@+id/img3"
-                android:src="@drawable/landscapeplaceholder"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_marginTop="16dp"
-                android:scaleType="centerCrop"
-                android:background="#CCCCCC"
-                app:layout_constraintTop_toTopOf="@id/img1"
-                app:layout_constraintStart_toEndOf="@id/img2"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintWidth_percent="0.3"/>
+                <ImageView
+                    android:id="@+id/img2"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
+                    android:layout_margin="8dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/landscapeplaceholder" />
 
-            <!-- Imagen fila 2 -->
-            <ImageView
-                android:id="@+id/img4"
-                android:src="@drawable/landscapeplaceholder"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_marginTop="8dp"
-                android:scaleType="centerCrop"
-                android:background="#CCCCCC"
-                app:layout_constraintTop_toBottomOf="@id/img1"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/img5"
-                app:layout_constraintWidth_percent="0.3"/>
+                <ImageView
+                    android:id="@+id/img3"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
+                    android:layout_margin="8dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/landscapeplaceholder" />
 
-            <ImageView
-                android:id="@+id/img5"
-                android:src="@drawable/landscapeplaceholder"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_marginTop="8dp"
-                android:scaleType="centerCrop"
-                android:background="#CCCCCC"
-                app:layout_constraintTop_toTopOf="@id/img4"
-                app:layout_constraintStart_toEndOf="@id/img4"
-                app:layout_constraintEnd_toStartOf="@id/img6"
-                app:layout_constraintWidth_percent="0.3"/>
+                <ImageView
+                    android:id="@+id/img4"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
+                    android:layout_margin="8dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/landscapeplaceholder" />
 
-            <ImageView
-                android:id="@+id/img6"
-                android:src="@drawable/landscapeplaceholder"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_marginTop="8dp"
-                android:scaleType="centerCrop"
-                android:background="#CCCCCC"
-                app:layout_constraintTop_toTopOf="@id/img4"
-                app:layout_constraintStart_toEndOf="@id/img5"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintWidth_percent="0.3"/>
+                <ImageView
+                    android:id="@+id/img5"
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
+                    android:layout_margin="8dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/landscapeplaceholder" />
+
+                <FrameLayout
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
+                    android:layout_margin="8dp">
+
+                    <ImageView
+                        android:id="@+id/img6"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/landscapeplaceholder" />
+
+                    <ImageView
+                        android:id="@+id/iv_camera"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/camera" />
+                </FrameLayout>
+            </GridLayout>
 
             <!-- Descripción -->
             <TextView
                 android:id="@+id/descLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Descripción"
                 android:textStyle="bold"
-                android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/img4"
+                app:layout_constraintTop_toBottomOf="@id/gridLayout"
                 app:layout_constraintStart_toStartOf="parent" />
 
             <EditText
                 android:id="@+id/descEdit"
                 android:layout_width="0dp"
                 android:layout_height="100dp"
+                android:background="@android:drawable/editbox_background"
+                android:gravity="top"
                 android:hint="Escribe algo sobre ti..."
                 android:inputType="textMultiLine"
-                android:gravity="top"
-                android:background="@android:drawable/editbox_background"
                 app:layout_constraintTop_toBottomOf="@id/descLabel"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Género buscado -->
 
             <TextView
                 android:id="@+id/genderLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Que genero buscas?"
+                android:layout_marginTop="30dp"
+                android:text="¿Que genero eres?"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/descEdit" />
+                app:layout_constraintTop_toBottomOf="@+id/genderLabel2" />
 
             <TextView
-                android:id="@+id/relationLabel"
+                android:id="@+id/genderLabel2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                android:text="Que tipo de relacion buscas?"
+                android:layout_marginTop="12dp"
+                android:text="¿Qué género buscas?"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/genderLabel" />
+                app:layout_constraintTop_toBottomOf="@id/descEdit" />
+
+            <!-- Relación buscada -->
+
+            <!-- Personalidad (cargada dinámicamente) -->
+
+            <!-- Aquí puedes cargar la personalidad -->
+
+
+            <!-- Notificaciones -->
+            <Spinner
+                android:id="@+id/genderSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginStart="32dp"
+                app:layout_constraintBottom_toBottomOf="@+id/genderLabel"
+                app:layout_constraintStart_toEndOf="@+id/genderLabel"
+                app:layout_constraintTop_toTopOf="@+id/genderLabel"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <Spinner
+                android:id="@+id/genderSpinner2"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginStart="32dp"
+                app:layout_constraintBottom_toBottomOf="@+id/genderLabel2"
+                app:layout_constraintStart_toEndOf="@+id/genderLabel"
+                app:layout_constraintTop_toTopOf="@+id/genderLabel2" />
 
             <TextView
                 android:id="@+id/notificacionesLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="30dp"
                 android:text="Notificaciones"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/personalidadLabel2" />
-
-            <TextView
-                android:id="@+id/personalidadLabel2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Personalidad"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/relationLabel" />
-
-            <Spinner
-                android:id="@+id/spinner"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_marginStart="20dp"
-                app:layout_constraintBottom_toBottomOf="@+id/genderLabel"
-                app:layout_constraintStart_toEndOf="@+id/genderLabel"
-                app:layout_constraintTop_toTopOf="@+id/genderLabel" />
-
-            <Spinner
-                android:id="@+id/spinner2"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_marginStart="-1dp"
-                app:layout_constraintBottom_toBottomOf="@+id/relationLabel"
-                app:layout_constraintStart_toEndOf="@+id/relationLabel"
-                app:layout_constraintTop_toTopOf="@+id/relationLabel" />
+                app:layout_constraintTop_toBottomOf="@+id/genderLabel" />
 
             <CheckBox
-                android:id="@+id/checkBox"
+                android:id="@+id/notificationCheckBox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 app:layout_constraintBottom_toBottomOf="@+id/notificacionesLabel"
                 app:layout_constraintStart_toEndOf="@+id/notificacionesLabel"
                 app:layout_constraintTop_toTopOf="@+id/notificacionesLabel" />
+
+            <TextView
+                android:id="@+id/personalidadLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="Personalidad:"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/notificacionesLabel" />
+
+            <LinearLayout
+                android:id="@+id/ll_interest_vertical"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="-10dp"
+                android:layout_marginBottom="40dp"
+                android:orientation="vertical"
+                android:padding="8dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/personalidadLabel">
+
+                <!-- Los elementos se agregarán dinámicamente desde Kotlin -->
+            </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
