@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+<!--    <color name="icon_tint_normal">#FF000000</color>-->
+<!--    <color name="icon_tint_focused">#FF505050</color>-->
+<!--    <color name="bottom_nav_background">#EEEEEE</color>-->
 </resources>

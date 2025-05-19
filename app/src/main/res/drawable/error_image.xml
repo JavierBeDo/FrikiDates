@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Fondo rojo claro -->
+    <path
+        android:fillColor="#FFCCCC"
+        android:pathData="M0,0h100v100h-100z" />
+
+    <!-- Círculo de advertencia centrado (radio ajustado para dejar margen del stroke) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#D32F2F"
+        android:strokeWidth="4"
+        android:pathData="M50,50
+                          m-28,0
+                          a28,28 0 1,0 56,0
+                          a28,28 0 1,0 -56,0" />
+
+    <!-- Línea vertical del signo de exclamación -->
+    <path
+        android:strokeColor="#D32F2F"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M50,34 L50,50" />
+
+    <!-- Punto del signo de exclamación -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M47,58
+                          a3,3 0 1,0 6,0
+                          a3,3 0 1,0 -6,0" />
+</vector>

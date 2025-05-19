@@ -57,17 +57,19 @@ dependencies {
 
     // Imagen y diseño
     implementation 'com.github.bumptech.glide:glide:4.13.2'
+    implementation 'androidx.wear.compose:compose-material:1.4.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
-    implementation("androidx.recyclerview:recyclerview:1.4.0") // Reemplaza con la última versión estable
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
+    implementation 'me.relex:circleindicator:2.1.6'
 
     // Kotlin Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") // Reemplaza con la última versión
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3") // Reemplaza con la última versión
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
 
     // Dependencia de la librería TinderCardStack
-    implementation("com.github.yuyakaido:CardStackView:2.3.4") // Reemplaza con la última versión estable
+    implementation("com.github.yuyakaido:CardStackView:2.3.4")
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

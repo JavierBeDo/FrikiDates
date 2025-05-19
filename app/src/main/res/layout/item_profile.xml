@@ -1,30 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="480dp"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
     android:layout_margin="16dp"
-    android:elevation="4dp"
-    android:radius="12dp">
+    android:background="@android:color/transparent"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <!-- Imagen del perfil -->
-        <ImageView
-            android:id="@+id/image_profile"
+        <!-- ViewPager2 que mostrará varias imágenes -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/image_pager"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="7"
-            android:scaleType="centerCrop"
-            android:src="@drawable/user1" />
+            android:layout_height="match_parent" />
 
-        <!-- Info del perfil -->
+        <!-- Indicadores de imagen -->
+        <me.relex.circleindicator.CircleIndicator3
+            android:id="@+id/image_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Botón de Imagen Anterior -->
+        <ImageButton
+            android:id="@+id/button_previous_image"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical|start"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Previous Image"
+            android:src="@drawable/ic_arrow_left"
+            android:visibility="gone"
+            app:tint="?attr/colorOnSurface" />
+
+        <!-- Botón de Imagen Siguiente -->
+        <ImageButton
+            android:id="@+id/button_next_image"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Next Image"
+            android:src="@drawable/ic_arrow_right"
+            android:visibility="gone"
+            app:tint="?attr/colorOnSurface" />
+
+
+        <!-- Tarjeta flotante con la info -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            android:background="@drawable/info_profile_card"
+            android:elevation="6dp"
             android:orientation="vertical"
             android:padding="12dp">
 
@@ -33,14 +69,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Nombre"
-                android:textStyle="bold"
-                android:textSize="20sp" />
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/age_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Edad" />
+
+            <TextView
+                android:id="@+id/gender_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Género"
+                android:layout_marginTop="4dp"/>
 
             <TextView
                 android:id="@+id/location_text"
@@ -52,10 +95,10 @@
                 android:id="@+id/compatibility_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="4dp"
                 android:text="Compatibilidad"
                 android:textColor="@android:color/holo_red_dark"
-                android:textStyle="bold"
-                android:paddingTop="4dp" />
+                android:textStyle="bold" />
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 </androidx.cardview.widget.CardView>
