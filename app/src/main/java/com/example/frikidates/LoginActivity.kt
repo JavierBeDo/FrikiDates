@@ -3,12 +3,19 @@ package com.example.frikidates
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.SeekBar
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
+import android.widget.ViewSwitcher
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import java.util.*
+import java.util.Calendar
+
 
 class LoginActivity : AppCompatActivity() {
 
@@ -22,21 +29,22 @@ class LoginActivity : AppCompatActivity() {
     // Registro
     private lateinit var etName: EditText
     private lateinit var etSurname: EditText
-    private lateinit var etAge: EditText
     private lateinit var etEmail_registrer: EditText
     private lateinit var etPassword_registrer: EditText
     private lateinit var spinnerGender: Spinner
     private lateinit var spinnerGenderPref: Spinner
     private lateinit var seekBarAgeRange: SeekBar
+
+    private lateinit var seekBarDistancia: SeekBar
+    private lateinit var tvDistRangeMin: TextView
     private lateinit var tvAgeRangeMin: TextView
     private lateinit var tvAgeRangeMax: TextView
+
     private lateinit var btnRegister: Button
     private lateinit var tvGoToLogin: TextView
-    private lateinit var llMoreWords: LinearLayout
-    private lateinit var ivExpand: ImageView
     private lateinit var birthdateDisplay: TextView
-    private var isExpanded = false
-    private val db = FirebaseFirestore.getInstance()
+    private lateinit var descEdit2 : EditText
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +59,9 @@ class LoginActivity : AppCompatActivity() {
         } else {
             setContentView(R.layout.activity_login)
         }
+
+        val db = FirebaseFirestore.getInstance()
+
 
         viewSwitcher = findViewById(R.id.viewSwitcher)
         etEmail = findViewById(R.id.et_login_email)
@@ -68,12 +79,12 @@ class LoginActivity : AppCompatActivity() {
         spinnerGenderPref = findViewById(R.id.spinner4)
         seekBarAgeRange = findViewById(R.id.seekBar)
         tvAgeRangeMin = findViewById(R.id.tv_edadmin)
+        tvDistRangeMin = findViewById(R.id.tvDistRangeMin)
         tvAgeRangeMax = findViewById(R.id.tv_edadmax)
         btnRegister = findViewById(R.id.btn_register)
         tvGoToLogin = findViewById(R.id.tv_go_to_login)
-        llMoreWords = findViewById(R.id.ll_more_words)
-        ivExpand = findViewById(R.id.iv_expand)
         birthdateDisplay = findViewById(R.id.birthdate_display)
+        descEdit2 = findViewById(R.id.descEdit2)
 
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString()
@@ -85,15 +96,45 @@ class LoginActivity : AppCompatActivity() {
             }
 
             mAuth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
-                    saveUserToPreferences("ejemplo")
-                    startActivity(Intent(this, MainMenuActivity::class.java))
-                    finish()
+                .addOnSuccessListener { authResult ->
+                    val uid = authResult.user?.uid ?: return@addOnSuccessListener
+
+                    val db = FirebaseFirestore.getInstance()
+
+                    // Recuperar el documento del usuario para extraer el profileId (solo el ID, sin la ruta completa)
+                    db.collection("user").document(uid).get()
+                        .addOnSuccessListener { userDoc ->
+                            val profileId = userDoc.getString("profileId") // Ejemplo: "profile_lzS2rkMz..."
+
+                            if (profileId != null) {
+                                // Obtener los datos del perfil
+                                db.collection("profiles").document(profileId).get()
+                                    .addOnSuccessListener { profileDoc ->
+                                        if (profileDoc.exists()) {
+                                            Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+                                            saveUserToPreferences(uid)
+                                            startActivity(Intent(this, LoginInterestsActivity::class.java))
+                                            finish()
+                                        } else {
+                                            Toast.makeText(this, "Perfil no encontrado", Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(this, "Error al obtener perfil: ${e.message}", Toast.LENGTH_LONG).show()
+                                    }
+                            } else {
+                                Toast.makeText(this, "No se encontró el ID del perfil", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Error al obtener usuario: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
+
+
         }
 
         // Acción para cambiar a la vista de registro
@@ -109,50 +150,58 @@ class LoginActivity : AppCompatActivity() {
         btnRegister.setOnClickListener {
             val name = etName.text.toString()
             val surname = etSurname.text.toString()
-            val age = etAge.text.toString().toIntOrNull() ?: -1
             val email = etEmail_registrer.text.toString()
             val password = etPassword_registrer.text.toString()
             val gender = spinnerGender.selectedItem.toString()
             val genderPref = spinnerGenderPref.selectedItem.toString()
-            val ageRange = "${tvAgeRangeMin.text}-${tvAgeRangeMax.text}"
+            val ageRange = "${tvAgeRangeMin.text}-99+"
             val birthdate = birthdateDisplay.text.toString()
+            val desc = descEdit2.text.toString()
+            val age = calculateAge(birthdate)
 
-            if (name.isEmpty() || surname.isEmpty() || age == -1 || email.isEmpty() || password.isEmpty()
-                || gender.isEmpty() || genderPref.isEmpty() || birthdate == "Selecciona tu fecha de nacimiento"
+            if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty()
+                || gender.isEmpty() || genderPref.isEmpty() || desc.isEmpty()
+                || birthdate == "Selecciona tu fecha de nacimiento" || age == -1
             ) {
                 Toast.makeText(this, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnSuccessListener {
-                    db.collection("user").get()
-                        .addOnSuccessListener { userDocs ->
-                            val newId = "user_${userDocs.size() + 1}"
-                            val userData = hashMapOf(
-                                "name" to name,
-                                "surname" to surname,
-                                "email" to email,
-                                "birthdate" to birthdate
-                            )
+                .addOnSuccessListener { authResult ->
+                    val uid = authResult.user?.uid ?: return@addOnSuccessListener
 
-                            db.collection("user").document(newId).set(userData)
+                    val profileId = "profile_$uid"
+
+                    // Datos del documento user/{uid}
+                    val userData = hashMapOf(
+                        "status" to "active",
+                        "profileId" to profileId // ✅ Solo el ID, sin "profiles/"
+                    )
+
+                    // Datos del documento profiles/profile_$uid
+                    val perfilData = hashMapOf(
+                        "name" to name,
+                        "surname" to surname,
+                        "email" to email,
+                        "birthdate" to birthdate,
+                        "genero" to gender,
+                        "preferenciaGenero" to genderPref,
+                        "rangoEdadBuscado" to ageRange,
+                        "distanciaMax" to 50,
+                        "bio" to desc,
+                        "imgUrl" to "",
+                        "notificaciones" to true
+                    )
+
+                    // Guardar en Firestore
+                    db.collection("profiles").document(profileId).set(perfilData)
+                        .addOnSuccessListener {
+                            db.collection("user").document(uid).set(userData)
                                 .addOnSuccessListener {
-                                    val perfilData = hashMapOf(
-                                        "edad" to age,
-                                        "genero" to gender,
-                                        "preferenciaGenero" to genderPref,
-                                        "rangoEdadBuscado" to ageRange,
-                                        "intereses" to listOf("anime", "videojuegos"),
-                                        "bio" to "Fan de manga y sci-fi"
-                                    )
-
-                                    db.collection("profiles").document("profile_${userDocs.size() + 1}").set(perfilData)
-                                        .addOnSuccessListener {
-                                            Toast.makeText(this, "Usuario registrado correctamente", Toast.LENGTH_SHORT).show()
-                                            saveUserToPreferences(newId)
-                                            startActivity(Intent(this, AddphotosActivity::class.java))
-                                        }
+                                    Toast.makeText(this, "Usuario registrado correctamente", Toast.LENGTH_SHORT).show()
+                                    saveUserToPreferences(uid)
+                                    startActivity(Intent(this, LoginInterestsActivity::class.java))
                                 }
                         }
                 }
@@ -161,6 +210,7 @@ class LoginActivity : AppCompatActivity() {
                 }
         }
 
+
         // Configurar los Spinners
         val genderOptions = arrayOf("Masculino", "Femenino", "Otro")
         val genderPrefOptions = arrayOf("Masculino", "Femenino", "Cualquiera")
@@ -168,35 +218,43 @@ class LoginActivity : AppCompatActivity() {
         spinnerGenderPref.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderPrefOptions)
 
         // Configurar el SeekBar de rango de edad
-        seekBarAgeRange.max = 81
-        seekBarAgeRange.progress = 18
+        seekBarAgeRange.max = 81 // Porque 99 - 18 = 81 posibles valores
+        seekBarAgeRange.progress = 0
         tvAgeRangeMin.text = "18"
         tvAgeRangeMax.text = "99+"
 
         seekBarAgeRange.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvAgeRangeMin.text = progress.toString()
-                tvAgeRangeMax.text = (99 - progress).toString()
+                val minAge = 18 + progress
+                tvAgeRangeMin.text = minAge.toString()
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        // Acción para desplegar el resto del LinearLayout
-        ivExpand.setOnClickListener {
-            if (isExpanded) {
-                llMoreWords.visibility = View.GONE
-                ivExpand.setImageResource(R.drawable.flecha)
-            } else {
-                llMoreWords.visibility = View.VISIBLE
-                ivExpand.setImageResource(R.drawable.flecha)
-            }
-            isExpanded = !isExpanded
-        }
+
 
         // Acción para mostrar el DatePickerDialog
         birthdateDisplay.setOnClickListener { showDatePickerDialog() }
+
+        seekBarDistancia = findViewById(R.id.seekBarDistancia)
+        tvDistRangeMin = findViewById(R.id.tvDistRangeMin)
+
+        seekBarDistancia.max = 195 // 200 - 5
+        seekBarDistancia.progress = 0
+        tvDistRangeMin.text = "5 km"
+
+        seekBarDistancia.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val distancia = 5 + progress
+                tvDistRangeMin.text = "$distancia km"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
     }
 
     private fun showDatePickerDialog() {
@@ -211,6 +269,25 @@ class LoginActivity : AppCompatActivity() {
             birthdateDisplay.text = date
         }, year, month, day).show()
     }
+
+    private fun calculateAge(birthdate: String): Int {
+        val parts = birthdate.split("/")
+        if (parts.size != 3) return -1
+        val day = parts[0].toInt()
+        val month = parts[1].toInt()
+        val year = parts[2].toInt()
+
+        val today = Calendar.getInstance()
+        val dob = Calendar.getInstance()
+        dob.set(year, month - 1, day)
+
+        var age = today.get(Calendar.YEAR) - dob.get(Calendar.YEAR)
+        if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
+            age--
+        }
+        return age
+    }
+
 
     private fun saveUserToPreferences(userId: String) {
         val user = User(userId)

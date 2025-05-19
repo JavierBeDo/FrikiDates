@@ -1,121 +1,95 @@
 package com.example.frikidates
 
+import AdapterChats
 import android.content.Intent
 import android.os.Bundle
-
+import android.util.Log
 import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import java.text.SimpleDateFormat
-import java.util.Locale
-
 
 class ChatsActivity : AppCompatActivity() {
 
-    private lateinit var navProfile: ImageView
-    private lateinit var navSearch: ImageView
-    private lateinit var userChat: CardView
+    private lateinit var nav_profile: ImageView
+    private lateinit var nav_search: ImageView
 
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: AdapterChats
+    private val chatList = mutableListOf<HolderChats>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chats)
 
-        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        nav_search = findViewById(R.id.nav_search)
+        nav_profile = findViewById(R.id.nav_profile)
 
-        navSearch = findViewById(R.id.nav_search)
-        navProfile = findViewById(R.id.nav_profile)
-        userChat = findViewById(R.id.cd_chats)
+        recyclerView = findViewById(R.id.CardChats)
+        recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val db = FirebaseFirestore.getInstance()
-        db.collection("matches")
-            .whereEqualTo("user_1", currentUserUid)
-            .get()
-            .addOnSuccessListener { docsUser1 ->
-                db.collection("matches")
-                    .whereEqualTo("user_2", currentUserUid)
-                    .get()
-                    .addOnSuccessListener { docsUser2 ->
+        adapter = AdapterChats(chatList) { chat ->
+            val intent = Intent(this, ChatConcretoActivity::class.java)
+            intent.putExtra("userId", chat.userId)
+            startActivity(intent)
+        }
 
-                        val allMatches = docsUser1.documents + docsUser2.documents
+        recyclerView.adapter = adapter
 
-                        for (doc in allMatches) {
-                            val matchId = doc.id
-                            val otherUserId = if (doc.getString("user_1") == currentUserUid)
-                                doc.getString("user_2")
-                            else
-                                doc.getString("user_1")
-
-                            // Carga último mensaje
-                            db.collection("matches")
-                                .document(matchId)
-                                .collection("messages")
-                                .orderBy("timestamp", Query.Direction.DESCENDING)
-                                .limit(1)
-                                .get()
-                                .addOnSuccessListener { messages ->
-                                    val lastMessage = messages.firstOrNull()
-                                    val lastText = when (lastMessage?.getString("type")) {
-                                        "image" -> "📷 Imagen"
-                                        else -> lastMessage?.getString("content") ?: "Nuevo chat"
-                                    }
-                                    val lastTime = lastMessage?.getTimestamp("timestamp")?.toDate()?.let {
-                                        SimpleDateFormat("HH:mm", Locale.getDefault()).format(it)
-                                    } ?: ""
-
-                                    // Aquí llamas a tu función para renderizar la vista del chat
-                                    cargarVistaChat(matchId, otherUserId, lastText, lastTime)
-                                }
-                        }
-                    }
-            }
-
-        navSearch.setOnClickListener {
+        nav_search.setOnClickListener {
             startActivity(Intent(this, MainMenuActivity::class.java))
             finish()
         }
-        navProfile.setOnClickListener {
+
+        nav_profile.setOnClickListener {
             startActivity(Intent(this, PerfilActivity::class.java))
             finish()
         }
 
-//        userChat.setOnClickListener {
-//            startActivity(Intent(this, ChatConcretoActivity::class.java))
-//        }
+        fetchChats()
     }
 
-    private fun cargarVistaChat(matchId: String, otherUserId: String?, lastText: String, lastTime: String) {
-        if (otherUserId == null) return // seguridad básica
-
-        val layout = findViewById<LinearLayout>(R.id.messageList)
+    private fun fetchChats() {
         val db = FirebaseFirestore.getInstance()
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        db.collection("users").document(otherUserId).get()
-            .addOnSuccessListener { userDoc ->
-                val nombreUsuario = userDoc.getString("name") ?: "Usuario"
-                val cardView = layoutInflater.inflate(R.layout.chat_card, layout, false) as CardView
+        db.collection("profiles")
+            .document("profile_$currentUserId")
+            .collection("matches")
+            .get()
+            .addOnSuccessListener { documents ->
+                chatList.clear()
+                for (doc in documents) {
+                    val matchedUserId = doc.getString("matchedUserId") ?: continue
+                    val lastMessage = doc.getString("lastMessage") ?: ""
+                    val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
 
-                val nombre = cardView.findViewById<TextView>(R.id.nombreMensaje)
-                val mensaje = cardView.findViewById<TextView>(R.id.mensajeMensaje)
-                val hora = cardView.findViewById<TextView>(R.id.horaMensaje)
+                    // Obtener el nombre real del perfil del usuario con matchedUserId
+                    db.collection("profiles")
+                        .document(matchedUserId)
+                        .get()
+                        .addOnSuccessListener { profileDoc ->
+                            val nombreReal = profileDoc.getString("name") ?: matchedUserId
 
-                nombre.text = nombreUsuario
-                mensaje.text = lastText
-                hora.text = lastTime
+                            val chat = HolderChats(
+                                userId = matchedUserId,
+                                username = nombreReal,
+                                lastMessage = lastMessage,
+                                timestamp = timestamp
+                            )
 
-                cardView.setOnClickListener {
-                    val intent = Intent(this, ChatConcretoActivity::class.java)
-                    intent.putExtra("matchId", matchId)
-                    intent.putExtra("otherUserId", otherUserId)
-                    startActivity(intent)
+                            chatList.add(chat)
+                            adapter.notifyItemInserted(chatList.size - 1)
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("ChatsActivity", "Error getting profile for $matchedUserId", e)
+                        }
                 }
-
-                layout.addView(cardView)
+            }
+            .addOnFailureListener { e ->
+                Log.e("ChatsActivity", "Error fetching matches", e)
             }
     }
 

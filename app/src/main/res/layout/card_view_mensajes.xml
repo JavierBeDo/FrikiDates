@@ -1,27 +1,17 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
     android:orientation="vertical"
     android:padding="10dp"
-    cardview:cardCornerRadius="10dp"
-    android:layout_marginBottom="10dp"> <!-- Afegit marge inferior -->
+    cardview:cardBackgroundColor="#00FFFFFF"
+    cardview:cardCornerRadius="10dp"> <!-- Afegit marge inferior -->
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10sp">
-
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/fotoPerfilMensaje"
-                android:layout_width="24sp"
-                android:layout_height="24sp"
-                android:src="@mipmap/ic_launcher" />
-        </LinearLayout>
+        android:layout_height="wrap_content"
+        android:background="#BCBCBC">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -30,34 +20,31 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:id="@+id/nombreMensaje"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Kevin" />
-
-                <TextView
-                    android:id="@+id/horaMensaje"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="00:00" />
-            </LinearLayout>
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:id="@+id/mensajeMensaje"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="7dp"
                 android:text="Hola bienvenido"
-                android:visibility="gone" />
+                android:textAlignment="textStart"
+                android:visibility="visible" />
 
             <ImageView
                 android:id="@+id/mensajeFoto"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/horaMensaje"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="7dp"
+                android:text="00:00"
+                android:textAlignment="textEnd"
+                android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 
