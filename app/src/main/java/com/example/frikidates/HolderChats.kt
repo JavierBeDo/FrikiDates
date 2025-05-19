@@ -8,3 +8,4 @@ data class HolderChats(
     val lastMessage: String = "",
     val timestamp: Long = 0L
 )
+
