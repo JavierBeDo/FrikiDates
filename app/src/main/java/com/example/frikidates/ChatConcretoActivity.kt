@@ -1,12 +1,18 @@
 package com.example.frikidates
 
 import MensajeEnviar
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -32,8 +38,11 @@ class ChatConcretoActivity : AppCompatActivity() {
     private val PHOTO_SEND = 1
     private val PHOTO_PERFIL = 2
 
+
+    @SuppressLint("WrongViewCast")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        supportActionBar?.hide() // Oculta la barra, pero el menú sigue funcionando
         setContentView(R.layout.activity_chats_concretos)
 
         // ==== Vistas ====
@@ -159,5 +168,42 @@ class ChatConcretoActivity : AppCompatActivity() {
                 rvMensajes.scrollToPosition(adapter.itemCount - 1)
             }
         })
+
+        val menuButton = findViewById<ImageView>(R.id.menu_boton)
+        menuButton.setOnClickListener {
+            val popup = PopupMenu(this, menuButton)
+            popup.menuInflater.inflate(R.menu.menu_chat_opciones, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_deshacer_match -> {
+                        showAlertDialog("¿Estás seguro de que deseas deshacer el match?")
+                        true
+                    }
+                    R.id.menu_denunciar -> {
+                        showAlertDialog("¿Deseas denunciar a este usuario?")
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
+        }
+
+
     }
+
+    private fun showAlertDialog(message: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Confirmación")
+            .setMessage(message)
+            .setPositiveButton("Sí") { dialog, _ ->
+                // Aquí va la lógica para deshacer match o denunciar
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
 }

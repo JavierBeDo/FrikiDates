@@ -13,8 +13,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 class ChatsActivity : AppCompatActivity() {
 
-    private lateinit var nav_profile: ImageView
-    private lateinit var nav_search: ImageView
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: AdapterChats
@@ -23,9 +21,6 @@ class ChatsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chats)
-
-        nav_search = findViewById(R.id.nav_search)
-        nav_profile = findViewById(R.id.nav_profile)
 
         recyclerView = findViewById(R.id.CardChats)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -38,16 +33,7 @@ class ChatsActivity : AppCompatActivity() {
 
         recyclerView.adapter = adapter
 
-        nav_search.setOnClickListener {
-            startActivity(Intent(this, MainMenuActivity::class.java))
-            finish()
-        }
-
-        nav_profile.setOnClickListener {
-            startActivity(Intent(this, PerfilActivity::class.java))
-            finish()
-        }
-
+        BottomNavManager.setupNavigation(this)
         fetchChats()
     }
 

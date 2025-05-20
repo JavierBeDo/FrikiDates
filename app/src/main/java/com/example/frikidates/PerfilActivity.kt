@@ -40,8 +40,6 @@ class PerfilActivity : AppCompatActivity() {
 
 
     private lateinit var interestManager: InterestManager
-    private lateinit var nav_profile: ImageView
-    private lateinit var nav_search: ImageView
     private lateinit var imageView1: ImageView
     private lateinit var imageView2: ImageView
     private lateinit var imageView3: ImageView
@@ -51,6 +49,7 @@ class PerfilActivity : AppCompatActivity() {
     private lateinit var iv_camera: ImageView
     private lateinit var descEdit: EditText
     private lateinit var genderSpinner: Spinner
+    private lateinit var genderSpinner2: Spinner
     private lateinit var notificationCheckBox: CheckBox
     private var user: User? = null
 
@@ -74,11 +73,15 @@ class PerfilActivity : AppCompatActivity() {
 
         userPreferences = UserPreferences(this)
 
+        //esto carga el nav
+        BottomNavManager.setupNavigation(this) {
+            updateDescriptionInDatabase(descEdit.text.toString())
+        }
+
+
         // Ahora puedes usar userPreferences para obtener el usuario
         user = userPreferences.getUser()
 
-        nav_profile = findViewById(R.id.nav_chat)
-        nav_search = findViewById(R.id.nav_search2)
         imageView1 = findViewById(R.id.img1)
         imageView2 = findViewById(R.id.img2)
         imageView3 = findViewById(R.id.img3)
@@ -88,26 +91,18 @@ class PerfilActivity : AppCompatActivity() {
         iv_camera = findViewById(R.id.iv_camera)
         descEdit = findViewById(R.id.descEdit)
         genderSpinner = findViewById(R.id.genderSpinner)
+        genderSpinner2 = findViewById(R.id.genderSpinner2)
         notificationCheckBox = findViewById(R.id.notificationCheckBox)
 
 
         loadUserImages()
         loadUserInfo()
-        loadGenders()
+        setupGenderSpinner(genderSpinner, "preferenciaGenero")
+        setupGenderSpinner(genderSpinner2, "genero")
         loadNotificationSettings()
         interestManager = InterestManager(this, findViewById(R.id.ll_interest_vertical))
         interestManager.loadAndDisplayInterests()
 
-        nav_profile.setOnClickListener {
-            updateDescriptionInDatabase(descEdit.text.toString())
-            startActivity(Intent(this, MainMenuActivity::class.java))
-            finish()
-        }
-        nav_search.setOnClickListener {
-            updateDescriptionInDatabase(descEdit.text.toString())
-            startActivity(Intent(this, ChatsActivity::class.java))
-            finish()
-        }
 
         notificationCheckBox.setOnCheckedChangeListener { _, isChecked ->
             updateNotificationSettingsInDatabase(isChecked)
@@ -320,77 +315,86 @@ class PerfilActivity : AppCompatActivity() {
         }
     }
 
-    private var isSpinnerInitialized = false
-    private fun loadGenders() {
+    private fun setupGenderSpinner(
+        spinner: Spinner,
+        firestoreFieldName: String,
+        getDefault: Boolean = true
+    ) {
         db.collection("gender")
             .get()
             .addOnSuccessListener { documents ->
                 val genders = mutableListOf<String>()
                 for (document in documents) {
-                    // Suponiendo que cada documento tiene un campo "name" con el género
                     val genderName = document.getString("name")
                     genderName?.let { genders.add(it) }
                 }
-                // Llenar el Spinner
+
                 val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genders)
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                genderSpinner.adapter = adapter
-                // Configurar el listener para el spinner
-                genderSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                    override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
-                        if (isSpinnerInitialized) {
+                spinner.adapter = adapter
+
+                var isInitialized = false
+
+                spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                        if (isInitialized) {
                             val selectedGender = genders[position]
-                            addUserGenderToDatabase(selectedGender)
+                            updateGenderInFirestore(firestoreFieldName, selectedGender)
                         }
-                        isSpinnerInitialized = true
+                        isInitialized = true
                     }
 
-                    override fun onNothingSelected(parent: AdapterView<*>) {
-                        // No hacer nada si no se selecciona nada
-                    }
+                    override fun onNothingSelected(parent: AdapterView<*>) {}
                 }
-                setDefaultGender(genders)
+
+                if (getDefault) {
+                    setDefaultGenderSelection(spinner, genders, firestoreFieldName)
+                }
+
             }
             .addOnFailureListener { e ->
                 Log.e("Firestore", "Error al cargar géneros", e)
             }
     }
 
-    private fun setDefaultGender(genders: List<String>) {
+
+    private fun setDefaultGenderSelection(spinner: Spinner, genders: List<String>, fieldName: String) {
         user?.let { currentUser ->
             val profileId = "profile_${currentUser.userId}"
             db.collection("profiles").document(profileId)
                 .get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
-                        val userGender = document.getString("preferenciaGenero")
-                        userGender?.let {
+                        val savedGender = document.getString(fieldName)
+                        savedGender?.let {
                             val position = genders.indexOf(it)
                             if (position >= 0) {
-                                genderSpinner.setSelection(position)
+                                spinner.setSelection(position)
                             }
                         }
                     }
                 }
                 .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error al cargar el género del usuario", e)
+                    Log.e("Firestore", "Error obteniendo $fieldName", e)
                 }
         }
     }
 
-    private fun addUserGenderToDatabase(gender: String) {
+
+    private fun updateGenderInFirestore(fieldName: String, gender: String) {
         user?.let { currentUser ->
             val profileId = "profile_${currentUser.userId}"
             db.collection("profiles").document(profileId)
-                .update("preferenciaGenero", gender)
+                .update(fieldName, gender)
                 .addOnSuccessListener {
-                    Log.d("Firestore", "Género actualizado correctamente a $gender")
+                    Log.d("Firestore", "$fieldName actualizado a $gender")
                 }
                 .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error al actualizar el género", e)
+                    Log.e("Firestore", "Error actualizando $fieldName", e)
                 }
         }
     }
+
 
         private fun loadNotificationSettings() {
             user?.let { currentUser ->
@@ -430,47 +434,5 @@ class PerfilActivity : AppCompatActivity() {
             val hoy = LocalDate.now()
             return Period.between(fechaNacimiento, hoy).years
         }
-
-/*
-    // Método para cargar intereses desde el documento "que_estoy_buscando"
-    private fun loadInterests() {
-        db.collection("interests").document("que_estoy_buscando")
-            .get()
-            .addOnSuccessListener { document ->
-                if (document != null) {
-                    // Obtener el array de intereses
-                    val interestsList = document.get("name") as? List<String> // Cambiado a List<String>
-
-                    interestsList?.let {
-                        // Llenar el Spinner
-                        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, it)
-                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                        findSpinner.adapter = adapter
-
-                        // Configurar el listener para el spinner
-                        findSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
-                                if (isSpinnerInitialized) {
-                                    val selectedInterest = it[position]
-                                   // updateInterests(selectedInterest)
-                                    Log.d("Selected Interest", selectedInterest)
-                                }
-                                isSpinnerInitialized = true
-                            }
-
-                            override fun onNothingSelected(parent: AdapterView<*>) {
-                                // No hacer nada si no se selecciona nada
-                            }
-                        }
-                    } ?: run {
-                        Log.d("Firestore", "El campo 'name' está vacío o no es una lista")
-                    }
-                } else {
-                    Log.d("Firestore", "No such document")
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", "Error al cargar intereses", e)
-            } */
 
 }

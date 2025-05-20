@@ -32,15 +32,20 @@
         app:layout_constraintTop_toBottomOf="@id/tv_app_title" />
 
     <!-- Botones de acción (Like, Rewind, Dislike) -->
+
+
+    <!-- Barra inferior -->
+
     <LinearLayout
         android:id="@+id/bottom_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="100dp"
+        android:elevation="4dp"
         android:gravity="center"
         android:orientation="horizontal"
-        android:layout_marginBottom="60dp"
-        app:layout_constraintBottom_toTopOf="@id/bottom_nav"
-        android:elevation="4dp">
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:layout_editor_absoluteX="0dp">
 
         <!-- Dislike -->
         <ImageView
@@ -48,61 +53,35 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginEnd="32dp"
-            android:src="@android:drawable/ic_delete"
-            android:contentDescription="Dislike" />
+            android:contentDescription="Dislike"
+            android:src="@drawable/brokenheart" />
 
         <!-- Rewind -->
+
+        <!-- Like -->
         <ImageView
             android:id="@+id/btn_rewind"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginEnd="32dp"
             android:contentDescription="Rewind"
-            android:src="@android:drawable/ic_media_previous" />
+            android:src="@drawable/back" />
 
-        <!-- Like -->
         <ImageView
             android:id="@+id/btn_like"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_like"
-            android:contentDescription="Like" />
+            android:contentDescription="Like"
+            android:src="@drawable/heart" />
     </LinearLayout>
 
-
-    <!-- Barra inferior -->
-    <LinearLayout
-        android:id="@+id/bottom_nav"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#EEEEEE"
-        android:gravity="center"
-        android:orientation="horizontal"
+    <include
+        layout="@layout/bottom_nav"
+        android:layout_width="wrap_content"
+        android:layout_height="55dp"
+        android:layout_alignParentBottom="true"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:elevation="4dp">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <ImageView
-            android:id="@+id/nav_search"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_search"
-            android:padding="12dp" />
-
-        <ImageView
-            android:id="@+id/nav_chat"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_dialog_email"
-            android:padding="12dp" />
-
-        <ImageView
-            android:id="@+id/nav_profile"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:src="@android:drawable/ic_menu_myplaces"
-            android:padding="12dp" />
-    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -56,6 +56,7 @@ class LoginActivity : AppCompatActivity() {
             // Redirigir a la actividad principal
             startActivity(Intent(this, MainMenuActivity::class.java))
             finish()
+            return
         } else {
             setContentView(R.layout.activity_login)
         }

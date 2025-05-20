@@ -51,7 +51,7 @@ class InterestManager(
             text = formattedGroupName
             textSize = 18f
             setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.WHITE)
+            setTextColor(Color.BLACK)
             setPadding(0, 16, 0, 8)
         }
         container.addView(groupTitle)
@@ -77,7 +77,7 @@ class InterestManager(
 
             if (chunked.size > 1) {
                 val arrow = ImageView(context).apply {
-                    setImageResource(R.drawable.flecha)
+                    setImageResource(R.drawable.downarrow)
                     layoutParams = LinearLayout.LayoutParams(36.dp, 24.dp).apply {
                         marginStart = 4.dp
                     }
@@ -144,11 +144,12 @@ class InterestManager(
         return TextView(context).apply {
             this.text = formattedText
             textSize = 11f
-            setTextColor(Color.WHITE)
+            setTextColor(Color.BLACK)
             setPadding(6, 6, 6, 6)
             setBackgroundResource(R.drawable.circle_background)
             layoutParams = LinearLayout.LayoutParams(92.dp, 44.dp).apply {
                 marginEnd = 2.dp
+                bottomMargin = 2.dp  // ⬅️ Agrega esto
             }
             gravity = Gravity.CENTER
 

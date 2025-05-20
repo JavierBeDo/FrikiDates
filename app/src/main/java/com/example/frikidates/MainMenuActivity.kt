@@ -1,12 +1,9 @@
 package com.example.frikidates
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.geometry.isEmpty
-import androidx.compose.ui.graphics.vector.path
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -21,8 +18,6 @@ import com.yuyakaido.android.cardstackview.SwipeAnimationSetting
 
 class MainMenuActivity : AppCompatActivity() {
 
-    private lateinit var nav_profile: ImageView
-    private lateinit var nav_chat: ImageView
     private lateinit var cardStackView: CardStackView
     private lateinit var manager: CardStackLayoutManager
 
@@ -30,13 +25,10 @@ class MainMenuActivity : AppCompatActivity() {
     private lateinit var btnDislike: ImageView
     private lateinit var btnRewind: ImageView
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)
-
-        // Botones navegación inferior
-        nav_profile = findViewById(R.id.nav_profile)
-        nav_chat = findViewById(R.id.nav_chat)
 
         // CardStack
         cardStackView = findViewById(R.id.card_stack_view)
@@ -50,22 +42,13 @@ class MainMenuActivity : AppCompatActivity() {
         })
         cardStackView.layoutManager = manager
         loadProfilesFromFirestore()
+        BottomNavManager.setupNavigation(this)
 
         // Botones de acción
         btnLike = findViewById(R.id.btn_like)
         btnDislike = findViewById(R.id.btn_dislike)
         btnRewind = findViewById(R.id.btn_rewind)
 
-        // Acciones navegación
-        nav_chat.setOnClickListener {
-            startActivity(Intent(this, ChatsActivity::class.java))
-            finish()
-        }
-
-        nav_profile.setOnClickListener {
-            startActivity(Intent(this, PerfilActivity::class.java))
-            finish()
-        }
 
         btnLike.setOnClickListener {
             val setting = SwipeAnimationSetting.Builder()
