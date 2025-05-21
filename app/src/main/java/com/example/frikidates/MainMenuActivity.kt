@@ -97,14 +97,6 @@ class MainMenuActivity : AppCompatActivity() {
 
     }
 
-//    private fun getDummyData(): List<Profile> {
-//        return listOf(
-//            Profile("María", 26, "Madrid", "Alta compatibilidad", listOf(R.drawable.user1, R.drawable.user1_2)),
-//            Profile("Laura", 24, "Barcelona", "Muy compatible", listOf(R.drawable.user2, R.drawable.user2_2, R.drawable.user2_3)),
-//            Profile("Lucía", 28, "Sevilla", "Compatible", listOf(R.drawable.user3))
-//        )
-//    }
-
     private fun loadProfilesFromFirestore() {
         val db = FirebaseFirestore.getInstance()
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -152,7 +144,7 @@ class MainMenuActivity : AppCompatActivity() {
 
                     //val interests = (data["interests"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
 
-                    loadImageUrlsFromStorage(profileDocumentId) { imageUrls ->
+                    loadAllProfileImages(profileDocumentId) { imageUrls ->
                         val profile = Profile(
                             name = name,
                             age = age,
@@ -183,73 +175,50 @@ class MainMenuActivity : AppCompatActivity() {
             }
     }
 
-    private fun loadImageUrlsFromStorage(profileId: String, callback: (List<String>) -> Unit) {
-        Log.i(
-            "StorageLoad",
-            "Attempting to load images for profileId: '$profileId'"
-        ) // Log el ID exacto
-
-        if (profileId.isBlank()) { // Usar isBlank() para cubrir null, empty y solo espacios en blanco
-            Log.e("StorageLoad", "profileId is blank. Cannot create storage reference.")
-            callback(emptyList())
+    private fun loadAllProfileImages(profileId: String, onResult: (List<String>) -> Unit) {
+        if (profileId.isBlank()) {
+            Log.e("StorageLoad", "profileId is blank, no se puede obtener imágenes.")
+            onResult(emptyList())
             return
         }
 
-        val storageRef = FirebaseStorage.getInstance().reference.child(profileId)
-        Log.d(
-            "StorageLoad",
-            "Storage reference path: ${storageRef.path}"
-        ) // Verifica la ruta completa
+        val folderName = profileId.removePrefix("profile_")
+        val storageRef = FirebaseStorage.getInstance().reference.child(folderName)
 
         storageRef.listAll()
-            .addOnSuccessListener { listResult: ListResult ->
-                Log.i(
-                    "StorageLoad",
-                    "listAll SUCCESS for '$profileId'. Items found: ${listResult.items.size}, Prefixes: ${listResult.prefixes.size}"
-                )
+            .addOnSuccessListener { listResult ->
                 if (listResult.items.isEmpty()) {
-                    Log.w("StorageLoad", "No items (images) found in folder '$profileId'")
-                    callback(emptyList())
+                    Log.w("StorageLoad", "No hay imágenes para $folderName")
+                    onResult(emptyList())
                     return@addOnSuccessListener
                 }
 
-                val imageUrls = mutableListOf<String>()
-                val totalItems = listResult.items.size
-                var loadedCount = 0
+                val urls = mutableListOf<String>()
+                val total = listResult.items.size
+                var loaded = 0
 
-                listResult.items.forEach { item ->
-                    Log.d("StorageLoad", "Processing item: ${item.name} in folder '$profileId'")
-                    item.downloadUrl.addOnSuccessListener { uri ->
-                        Log.i("StorageLoad", "SUCCESS getting download URL for ${item.name}: $uri")
-                        imageUrls.add(uri.toString())
-                        loadedCount++
-                        if (loadedCount == totalItems) {
-                            Log.i(
-                                "StorageLoad",
-                                "All ${totalItems} URLs loaded for '$profileId'. Passing to callback: $imageUrls"
-                            )
-                            callback(imageUrls)
+                for (item in listResult.items) {
+                    item.downloadUrl
+                        .addOnSuccessListener { uri ->
+                            urls.add(uri.toString())
+                            loaded++
+                            if (loaded == total) {
+                                onResult(urls)
+                            }
                         }
-                    }.addOnFailureListener { exception ->
-                        Log.e(
-                            "StorageLoad",
-                            "FAILURE getting download URL for ${item.name} in '$profileId'",
-                            exception
-                        )
-                        loadedCount++ // Incrementar incluso en fallo para que el callback final se llame
-                        if (loadedCount == totalItems) {
-                            Log.w(
-                                "StorageLoad",
-                                "Finished processing all items for '$profileId' but some URLs failed. Passing to callback: $imageUrls"
-                            )
-                            callback(imageUrls) // Pasar las que se hayan podido cargar
+                        .addOnFailureListener {
+                            Log.e("StorageLoad", "Error al obtener URL de ${item.name}", it)
+                            loaded++
+                            if (loaded == total) {
+                                onResult(urls)
+                            }
                         }
-                    }
                 }
             }
-            .addOnFailureListener { exception ->
-                Log.e("StorageLoad", "listAll FAILURE for profileId: '$profileId'", exception)
-                callback(emptyList())
+            .addOnFailureListener {
+                Log.e("StorageLoad", "Error al listar imágenes para $folderName", it)
+                onResult(emptyList())
             }
     }
+
 }

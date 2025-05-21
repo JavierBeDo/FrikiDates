@@ -58,8 +58,10 @@ class CardStackAdapter(
         fun updateImageNavigationButtonsVisibility() {
             val currentItem = holder.imagePager.currentItem
             val totalItems = holder.imagePager.adapter?.itemCount ?: 0
-            holder.buttonPreviousImage.visibility = if (totalItems > 1 && currentItem > 0) View.VISIBLE else View.GONE
-            holder.buttonNextImage.visibility = if (totalItems > 1 && currentItem < totalItems - 1) View.VISIBLE else View.GONE
+            holder.buttonPreviousImage.visibility =
+                if (totalItems > 1 && currentItem > 0) View.VISIBLE else View.GONE
+            holder.buttonNextImage.visibility =
+                if (totalItems > 1 && currentItem < totalItems - 1) View.VISIBLE else View.GONE
         }
 
         updateImageNavigationButtonsVisibility()
@@ -97,9 +99,4 @@ class CardStackAdapter(
     }
 
     override fun getItemCount(): Int = profiles.size
-
-    fun submitList(newProfiles: List<Profile>) {
-        profiles = newProfiles
-        notifyDataSetChanged()
-    }
 }

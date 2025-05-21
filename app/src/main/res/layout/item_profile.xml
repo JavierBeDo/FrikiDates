@@ -82,8 +82,8 @@
                 android:id="@+id/gender_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Género"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginTop="4dp"
+                android:text="Género" />
 
             <TextView
                 android:id="@+id/location_text"
@@ -99,6 +99,16 @@
                 android:text="Compatibilidad"
                 android:textColor="@android:color/holo_red_dark"
                 android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btn_more_info"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="8dp"
+                android:contentDescription="Ver más información"
+                android:src="@android:drawable/ic_input_add"
+                app:tint="@android:color/holo_red_dark" />
         </LinearLayout>
     </FrameLayout>
 </androidx.cardview.widget.CardView>
