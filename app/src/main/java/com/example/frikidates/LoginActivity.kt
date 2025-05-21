@@ -114,7 +114,7 @@ class LoginActivity : AppCompatActivity() {
                                         if (profileDoc.exists()) {
                                             Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
                                             saveUserToPreferences(uid)
-                                            startActivity(Intent(this, LoginInterestsActivity::class.java))
+                                            startActivity(Intent(this, MainMenuActivity::class.java))
                                             finish()
                                         } else {
                                             Toast.makeText(this, "Perfil no encontrado", Toast.LENGTH_LONG).show()
