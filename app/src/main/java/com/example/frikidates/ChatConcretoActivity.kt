@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -18,14 +19,19 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import de.hdodenhof.circleimageview.CircleImageView
+import com.google.firebase.database.ValueEventListener
 
-class ChatConcretoActivity : AppCompatActivity() {
+
+class ChatConcretoActivity : BaseActivity() {
 
     private lateinit var fotoPerfil: CircleImageView
     private lateinit var nombre: TextView
@@ -37,6 +43,8 @@ class ChatConcretoActivity : AppCompatActivity() {
 
     private val PHOTO_SEND = 1
     private val PHOTO_PERFIL = 2
+
+    private lateinit var estadoUsuario: ImageView
 
 
     @SuppressLint("WrongViewCast")
@@ -52,6 +60,8 @@ class ChatConcretoActivity : AppCompatActivity() {
         txtMensaje   = findViewById(R.id.message_input)
         btnEnviar    = findViewById(R.id.send_button)
         btnEnviarFoto= findViewById(R.id.btnEnviarFoto)
+        estadoUsuario = findViewById(R.id.estado_usuario)
+
 
         // ==== Preparar Recycler + Adapter ====
         val senderId = FirebaseAuth.getInstance().currentUser?.uid ?: return
@@ -80,8 +90,36 @@ class ChatConcretoActivity : AppCompatActivity() {
                         nombre.text = nombreReal
 
                         // === 2. Obtener imagen de perfil ===
-                        // Eliminar el prefijo "profile_" para acceder al storage
                         val folderName = matchedUserId.removePrefix("profile_")
+                        val estadoRef = FirebaseDatabase.getInstance("https://frikidatesdb-default-rtdb.europe-west1.firebasedatabase.app")
+                            .getReference("user/$folderName/status")
+
+                        estadoRef.addValueEventListener(object : ValueEventListener {
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                val estado = snapshot.getValue(String::class.java)
+                                Log.d("EstadoUsuario", "Snapshot recibido con estado: $estado")
+                                if (estado == "active") {
+                                    estadoUsuario.setImageResource(R.drawable.circle_online)
+                                } else {
+                                    estadoUsuario.setImageResource(R.drawable.circle_inactive)
+                                }
+                            }
+                            override fun onCancelled(error: DatabaseError) {
+                                Log.e("EstadoUsuario", "Error consultando estado: ${error.message}")
+                            }
+                        })
+
+                        val user = FirebaseAuth.getInstance().currentUser
+                        if (user == null) {
+                            Log.e("BaseActivity", "Usuario no autenticado, no se puede actualizar estado")
+                            return@addOnSuccessListener
+                        }
+                        Log.d("BaseActivity", "Usuario autenticado: ${user.uid}")
+                        Log.d("BaseActivity", "el otro: $folderName")
+                        Log.d("EstadoUsuario", "Escuchando en ruta: user/$folderName/status")
+
+
+
                         val storageRef = FirebaseStorage.getInstance().reference.child(folderName)
 
                         storageRef.listAll()
@@ -110,6 +148,7 @@ class ChatConcretoActivity : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Log.e("ChatConcreto", "Error obteniendo matchedUserId: ${e.message}")
             }
+
 
 
         // ==== 2) Envío de texto ====
@@ -189,8 +228,9 @@ class ChatConcretoActivity : AppCompatActivity() {
             popup.show()
         }
 
-
     }
+
+
 
     private fun showAlertDialog(message: String) {
         AlertDialog.Builder(this)

@@ -85,11 +85,10 @@
                     android:textSize="12sp" />
 
                 <ImageView
-                    android:id="@+id/imageView"
+                    android:id="@+id/estado_usuario"
                     android:layout_width="19dp"
                     android:layout_height="12dp"
-                    android:layout_gravity="center"
-                    app:srcCompat="@drawable/boton" />
+                    android:layout_gravity="center" />
             </LinearLayout>
 
         </LinearLayout>
@@ -112,7 +111,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:background="@android:drawable/ic_menu_gallery" />
+            android:background="@android:drawable/ic_menu_gallery"
+            android:visibility="invisible" />
 
         <EditText
             android:id="@+id/message_input"
