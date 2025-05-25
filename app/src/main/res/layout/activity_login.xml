@@ -66,6 +66,15 @@
                 android:text="¿No tienes cuenta? Créala"
                 android:textColor="@android:color/holo_blue_dark" />
 
+            <TextView
+                android:id="@+id/tv_resend_mail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="¿No te a llegado el correo de verificación? Reenviar"
+                android:textColor="@android:color/holo_blue_dark"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <ScrollView
@@ -156,7 +165,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
                         android:foregroundGravity="right"
-                        android:gravity="right"
+                        android:gravity="end"
                         android:text="99+"
                         android:textAlignment="viewEnd" />
 
@@ -211,12 +220,12 @@
                         android:text="5km" />
 
                     <TextView
-                        android:id="@+id/tv_edadmin"
+                        android:id="@+id/tvDistRangeMax"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
                         android:foregroundGravity="right"
-                        android:gravity="right"
+                        android:gravity="end"
                         android:text="200km"
                         android:textAlignment="viewEnd" />
 
@@ -265,14 +274,14 @@
 
     </ViewSwitcher>
 
-    <androidx.constraintlayout.helper.widget.Layer
-        android:id="@+id/layer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="2dp"
-        app:constraint_referenced_ids="viewSwitcher"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="66dp" />
+<!--    <androidx.constraintlayout.helper.widget.Layer-->
+<!--        android:id="@+id/layer"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginEnd="2dp"-->
+<!--        app:constraint_referenced_ids="viewSwitcher"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        tools:layout_editor_absoluteY="66dp" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

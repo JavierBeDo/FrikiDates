@@ -1,16 +1,24 @@
 package com.example.frikidates
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.widget.ImageView
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.geometry.isEmpty
-import androidx.compose.ui.graphics.vector.path
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.example.frikidates.util.LocationEncryptionHelper
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.ListResult
 import com.yuyakaido.android.cardstackview.CardStackLayoutManager
 import com.yuyakaido.android.cardstackview.CardStackListener
 import com.yuyakaido.android.cardstackview.CardStackView
@@ -30,6 +38,10 @@ class MainMenuActivity : AppCompatActivity() {
     private lateinit var btnDislike: ImageView
     private lateinit var btnRewind: ImageView
 
+    private lateinit var locationPermissionRequest: ActivityResultLauncher<String>
+
+    private val profilesList = mutableListOf<Profile>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)
@@ -37,6 +49,28 @@ class MainMenuActivity : AppCompatActivity() {
         // Botones navegación inferior
         nav_profile = findViewById(R.id.nav_profile)
         nav_chat = findViewById(R.id.nav_chat)
+
+        // Botones de acción
+        btnLike = findViewById(R.id.btn_like)
+        btnDislike = findViewById(R.id.btn_dislike)
+        btnRewind = findViewById(R.id.btn_rewind)
+
+        locationPermissionRequest = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                getUserLocation()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Necesitamos tu ubicación para mostrarte personas cercanas",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+        }
+        // Lanza la petición
+        solicitarPermisoUbicacion()
 
         // CardStack
         cardStackView = findViewById(R.id.card_stack_view)
@@ -50,11 +84,6 @@ class MainMenuActivity : AppCompatActivity() {
         })
         cardStackView.layoutManager = manager
         loadProfilesFromFirestore()
-
-        // Botones de acción
-        btnLike = findViewById(R.id.btn_like)
-        btnDislike = findViewById(R.id.btn_dislike)
-        btnRewind = findViewById(R.id.btn_rewind)
 
         // Acciones navegación
         nav_chat.setOnClickListener {
@@ -117,9 +146,8 @@ class MainMenuActivity : AppCompatActivity() {
                     cardStackView.adapter = CardStackAdapter(this@MainMenuActivity, emptyList())
                     return@addOnSuccessListener
                 }
-                val profilesList = mutableListOf<Profile>()
-                val potentialMatchesCount =
-                    result.documents.count() { it.getString("email") != currentUserEmail }
+                val profilesToProcess = result.documents.filter { it.getString("email") != currentUserEmail } // TODO cambiar filtros de los perfiles a procesar
+                val potentialMatchesCount = profilesToProcess.size
                 if (potentialMatchesCount == 0) {
                     Log.d("Firestore", "No hay otros perfiles para mostrar.")
                     cardStackView.adapter = CardStackAdapter(this@MainMenuActivity, emptyList())
@@ -154,8 +182,8 @@ class MainMenuActivity : AppCompatActivity() {
                             images = imageUrls
                         )
                         profilesList.add(profile)
-
                         processedPotentialMatches++
+
                         if (processedPotentialMatches == potentialMatchesCount) {
                             // << CAMBIO AQUÍ: Pasar 'this@MainMenuActivity' para el Context
                             cardStackView.adapter =
@@ -220,5 +248,130 @@ class MainMenuActivity : AppCompatActivity() {
                 onResult(emptyList())
             }
     }
+
+    private fun solicitarPermisoUbicacion() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
+            getUserLocation()
+        }
+    }
+
+    private fun getUserLocation() {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    if (location == null) {
+                        Log.w(
+                            "Location",
+                            "Ubicación es null, no se pudo obtener la ubicación actual."
+                        )
+                        Toast.makeText(
+                            this,
+                            "No se pudo obtener tu ubicación. Intenta más tarde.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@addOnSuccessListener
+                    }
+
+                    val lat = location.latitude
+                    val lon = location.longitude
+                    val encryptedLocation = LocationEncryptionHelper.encryptLocation(lat, lon)
+
+                    // Comprobar si la ubicación descifrada es válida (no 0.0)
+                    if (lat == 0.0 && lon == 0.0) {
+                        Log.w("Location", "Ubicación descifrada inválida: lat y lon son 0.0")
+                        Toast.makeText(
+                            this,
+                            "Ubicación inválida detectada. Intenta reiniciar la app.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        // Opcional: aquí podrías intentar obtener la ubicación de nuevo o pedir al usuario que active GPS
+                        return@addOnSuccessListener
+                    }
+
+                    saveToFirebase(encryptedLocation, lat, lon)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("Location", "Error al obtener la ubicación", e)
+                    Toast.makeText(
+                        this,
+                        "Error al obtener ubicación: ${e.localizedMessage}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+        } else {
+            Log.w("Location", "Permiso de ubicación no concedido")
+            Toast.makeText(this, "Permiso de ubicación no concedido", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    private fun saveToFirebase(encryptedLocation: String, newLat: Double, newLon: Double) {
+        val db = FirebaseFirestore.getInstance()
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val profileRef = db.collection("profiles").document("profile_$userId")
+        val locationCollectionRef = profileRef.collection("location")
+        val lastLocationDocRef = locationCollectionRef.document("actual") // documento único para la última ubicación
+
+        if (!LocationEncryptionHelper.isKeyValid()) {
+            Log.w("Ubicación", "Clave eliminada. Limpiando datos de ubicación antigua.")
+            lastLocationDocRef.delete()
+                .addOnSuccessListener {
+                    Log.d("Ubicación", "Ubicación anterior eliminada correctamente.")
+                }
+                .addOnFailureListener {
+                    Log.e("Ubicación", "Error al eliminar la ubicación anterior", it)
+                }
+            return // Salir sin guardar nueva ubicación
+        }
+
+        lastLocationDocRef.get().addOnSuccessListener { document ->
+            val lastTimestamp = document.getTimestamp("timestamp")?.toDate()
+            val lastEncryptedLocation = document.getString("encryptedLocation")
+
+            val now = System.currentTimeMillis()
+            val shouldUpdateTime =
+                lastTimestamp == null || now - lastTimestamp.time > 5 * 60 * 1000 // 5 minutos
+
+            val shouldUpdateLocation = if (lastEncryptedLocation == null) {
+                true
+            } else {
+                LocationEncryptionHelper.hasLocationChangedSignificantly(
+                    lastEncryptedLocation,
+                    newLat,
+                    newLon
+                )
+            }
+
+            if (shouldUpdateTime || shouldUpdateLocation) {
+                val updateData = mapOf(
+                    "encryptedLocation" to encryptedLocation,
+                    "timestamp" to FieldValue.serverTimestamp()
+                )
+
+                lastLocationDocRef.set(updateData)
+                    .addOnSuccessListener {
+                        Log.d("LocationUpdate", "Ubicación encriptada guardada correctamente en subcolección.")
+                    }
+                    .addOnFailureListener {
+                        Log.e("LocationUpdate", "Error al guardar ubicación encriptada en subcolección", it)
+                    }
+            } else {
+                Log.d("LocationUpdate", "Ubicación no actualizada: sin cambios relevantes.")
+            }
+        }.addOnFailureListener {
+            Log.e("LocationUpdate", "Error al obtener documento de ubicación para comprobar ubicación", it)
+        }
+    }
+
 
 }
