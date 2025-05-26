@@ -372,6 +372,4 @@ class MainMenuActivity : AppCompatActivity() {
             Log.e("LocationUpdate", "Error al obtener documento de ubicación para comprobar ubicación", it)
         }
     }
-
-
 }
