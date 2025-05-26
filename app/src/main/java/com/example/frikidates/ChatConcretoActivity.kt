@@ -63,6 +63,21 @@ class ChatConcretoActivity : BaseActivity() {
         // Dentro de onCreate, después de recibir matchId:
         val matchId = intent.getStringExtra("matchId") ?: getString(R.string.default_match_id)
 
+        btnEnviar.setOnClickListener {
+            val mensajeTexto = txtMensaje.text.toString().trim()
+            if (mensajeTexto.isNotEmpty()) {
+                FirebaseRepository.sendTextMessage(
+                    matchId,
+                    senderId,
+                    mensajeTexto,
+                    onSuccess = { txtMensaje.text.clear() },
+                    onFailure = { e ->
+                        Log.e("ChatConcreto", "Error al enviar mensaje: ${e.message}")
+                    }
+                )
+            }
+        }
+
 
         FirebaseRepository.getMatchedUserId(
             context = this,
@@ -109,30 +124,31 @@ class ChatConcretoActivity : BaseActivity() {
             }
         )
 
-
-        FirebaseRepository.listenMessages(matchId, { msg ->
-            adapter.addMensaje(msg)
-        }, { e ->
-            Log.e("ChatConcreto", getString(R.string.error_listening_messages, e.message))
-        })
-
-        btnEnviarFoto.setOnClickListener {
-            openImageSelector()
-        }
-
-        FirebaseRepository.listenMessages(matchId,
+        FirebaseRepository.listenMessages(
+            matchId,
             onNewMessage = { msg ->
                 adapter.addMensaje(msg)
+            },
+            onMessageUpdated = { msg ->
+                adapter.updateMensaje(msg)
             },
             onError = { e ->
                 Log.e("ChatConcreto", getString(R.string.error_listening_messages, e.message))
             }
         )
 
+      //  btnEnviarFoto.setOnClickListener {
+        //    openImageSelector()
+        //}
+
+
+
         adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
-            override fun onItemRangeInserted(posStart: Int, itemCount: Int) {
-                super.onItemRangeInserted(posStart, itemCount)
-                rvMensajes.scrollToPosition(adapter.itemCount - 1)
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(positionStart, itemCount)
+                rvMensajes.post {
+                    rvMensajes.scrollToPosition(adapter.itemCount - 1)
+                }
             }
         })
 

@@ -1,5 +1,6 @@
 package com.example.frikidates
 
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
@@ -77,10 +78,35 @@ class AdapterMensajes(private val c: Context, private val myUserId: String) : Re
         }
 
         // Mostrar hora
-        val timestamp = mensaje.timestamp?.time ?: 0L
-        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        holder.hora.text = sdf.format(Date(timestamp))
+        val timestamp = mensaje.timestamp
+        if (timestamp != null) {
+            val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+            holder.hora.text = sdf.format(timestamp.toDate())
+        } else {
+            // Timestamp aún pendiente (no recibido)
+            holder.hora.text = "Enviando..."  // O muestra "..." o "Enviando..."
+        }
+        //val timestamp2 = mensaje.timestamp?.time ?: 0L
+        //val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        //holder.hora.text = sdf.format(Date(timestamp))
     }
 
     override fun getItemCount(): Int = listMensaje.size
+
+
+    fun updateMensaje(updatedMensaje: MensajeRecibir) {
+        val index = listMensaje.indexOfFirst { it.id == updatedMensaje.id }
+        if (index != -1) {
+            listMensaje[index] = updatedMensaje
+            notifyItemChanged(index)
+            // Forzar scroll después de actualizar el mensaje
+            (c as? Activity)?.runOnUiThread {
+                (c as Activity).runOnUiThread {
+                    // Aquí suponiendo que tienes acceso al RecyclerView, si no, usa un callback
+                    // o maneja desde la Activity la actualización con scroll
+                }
+            }
+        }
+    }
+
 }
