@@ -43,7 +43,6 @@ class ImagePagerAdapter(
 
     override fun getItemCount(): Int {
         // Si la lista de URLs está vacía, aún podríamos querer mostrar una "página" con el placeholder.
-        // Si no quieres esto y prefieres que el ViewPager esté vacío, simplemente devuelve imageUrls.size.
         return if (imageUrls.isEmpty()) 1 else imageUrls.size
     }
 }

@@ -4,12 +4,11 @@ import AdapterChats
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.frikidates.firebase.FirebaseRepository
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
 class ChatsActivity : AppCompatActivity() {
 
@@ -38,45 +37,18 @@ class ChatsActivity : AppCompatActivity() {
     }
 
     private fun fetchChats() {
-        val db = FirebaseFirestore.getInstance()
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        db.collection("profiles")
-            .document("profile_$currentUserId")
-            .collection("matches")
-            .get()
-            .addOnSuccessListener { documents ->
+        FirebaseRepository.fetchChatsForUser(
+            currentUserId,
+            onChatsLoaded = { chats ->
                 chatList.clear()
-                for (doc in documents) {
-                    val matchedUserId = doc.getString("matchedUserId") ?: continue
-                    val lastMessage = doc.getString("lastMessage") ?: ""
-                    val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
-
-                    // Obtener el nombre real del perfil del usuario con matchedUserId
-                    db.collection("profiles")
-                        .document(matchedUserId)
-                        .get()
-                        .addOnSuccessListener { profileDoc ->
-                            val nombreReal = profileDoc.getString("name") ?: matchedUserId
-
-                            val chat = HolderChats(
-                                userId = matchedUserId,
-                                username = nombreReal,
-                                lastMessage = lastMessage,
-                                timestamp = timestamp
-                            )
-
-                            chatList.add(chat)
-                            adapter.notifyItemInserted(chatList.size - 1)
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("ChatsActivity", "Error getting profile for $matchedUserId", e)
-                        }
-                }
+                chatList.addAll(chats)
+                adapter.notifyDataSetChanged()
+            },
+            onError = { e ->
+                Log.e("ChatsActivity", getString(R.string.error_fetching_matches, e.message))
             }
-            .addOnFailureListener { e ->
-                Log.e("ChatsActivity", "Error fetching matches", e)
-            }
+        )
     }
-
 }

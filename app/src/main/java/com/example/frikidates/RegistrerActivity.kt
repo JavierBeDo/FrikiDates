@@ -66,4 +66,4 @@ class RegisterActivity : AppCompatActivity() {
                 }
         }
     }
-}
+} //no se si se usa

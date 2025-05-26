@@ -24,17 +24,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
+import com.example.frikidates.firebase.FirebaseRepository
 import com.example.frikidates.utils.InterestManager
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
-import com.google.firebase.storage.FirebaseStorage
-import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 class PerfilActivity : AppCompatActivity() {
 
@@ -60,13 +55,17 @@ class PerfilActivity : AppCompatActivity() {
 
     private var selectedImageView: ImageView? = null // Variable para rastrear qué ImageView se seleccionó
 
-    private val db = FirebaseFirestore.getInstance()
     private lateinit var userPreferences: UserPreferences
+
+
+    private val userId: String
+        get() = user?.userId ?: ""
 
     @SuppressLint("CutPasteId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_perfil)
+
 
         val layout = findViewById<LinearLayout>(R.id.ll_interest_vertical)
         interestManager = InterestManager(this, layout)
@@ -75,7 +74,7 @@ class PerfilActivity : AppCompatActivity() {
 
         //esto carga el nav
         BottomNavManager.setupNavigation(this) {
-            updateDescriptionInDatabase(descEdit.text.toString())
+            updateDescriptionInDatabase(userId, descEdit.text.toString())
         }
 
 
@@ -176,87 +175,92 @@ class PerfilActivity : AppCompatActivity() {
     }
 
     private fun uploadUriToFirebaseStorage(imageUri: Uri) {
-        val storageRef = FirebaseStorage.getInstance().reference.child("${user?.userId}/${UUID.randomUUID()}.jpg")
-
-        storageRef.putFile(imageUri)
-            .addOnSuccessListener { taskSnapshot ->
-                taskSnapshot.storage.downloadUrl.addOnSuccessListener { downloadUri ->
-                    val imageUrl = downloadUri.toString()
-                    // Guarda la URL de la imagen en Firestore
-                    saveImageUrlToFirestore(imageUrl)
-                }
+        FirebaseRepository.uploadUriToFirebaseStorage(
+            userId,
+            imageUri,
+            onSuccess = { imageUrl ->
+                val successMessage = "Image URL saved successfully: $imageUrl"
+                FirebaseRepository.saveImageUrlToFirestore(
+                    userId,
+                    imageUrl,
+                    onSuccess = {
+                        Log.d("Firestore", successMessage)
+                        // Opcional: Toast.makeText(this, successMessage, Toast.LENGTH_SHORT).show()
+                    },
+                    onFailure = { e ->
+                        val errorMessage = "Error saving image URL: ${e.message}"
+                        Log.e("Firestore", errorMessage)
+                        // Opcional: Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onFailure = { exception ->
+                val uploadError = "Error uploading image: ${exception.message}"
+                Log.e("Upload", uploadError)
+                // Opcional: Toast.makeText(this, uploadError, Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener { exception ->
-                Log.e("Upload", "Error uploading image: ${exception.message}")
-            }
+        )
     }
 
     private fun uploadBitmapToFirebaseStorage(bitmap: Bitmap) {
-        val storageRef = FirebaseStorage.getInstance().reference.child("images/${UUID.randomUUID()}.jpg")
-
-        // Convertir Bitmap a ByteArray
-        val baos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 75, baos)
-        val data = baos.toByteArray()
-
-        storageRef.putBytes(data)
-            .addOnSuccessListener { taskSnapshot ->
-                taskSnapshot.storage.downloadUrl.addOnSuccessListener { downloadUri ->
-                    val imageUrl = downloadUri.toString()
-                    // Guarda la URL de la imagen en Firestore
-                    saveImageUrlToFirestore(imageUrl)
-                }
+        FirebaseRepository.uploadBitmapToFirebaseStorage(
+            userId,
+            bitmap,
+            onSuccess = { imageUrl ->
+                saveImageUrlToFirestore(
+                    userId,
+                    imageUrl,
+                    onSuccess = {
+                        val successMessage = getString(R.string.upload_success, imageUrl)
+                        Log.d("Firestore", successMessage)
+                    },
+                    onFailure = { e ->
+                        val errorMessage = getString(R.string.save_error, e.message)
+                        Log.e("Firestore", errorMessage)
+                    }
+                )
+            },
+            onFailure = { exception ->
+                val uploadError = getString(R.string.upload_error, exception.message)
+                Log.e("Upload", uploadError)
             }
-            .addOnFailureListener { exception ->
-                Log.e("Upload", "Error uploading image: ${exception.message}")
-            }
+        )
     }
 
-    private fun saveImageUrlToFirestore(imageUrl: String) {
-        // Crear un objeto de usuario o simplemente guardar la URL en una colección
-        val userId = user?.userId // Reemplaza con el ID del usuario actual
-        val imageData = hashMapOf(
-            "imageUrl" to imageUrl
-        )
-
-        if (userId != null) {
-            db.collection("users").document(userId)
-                .set(imageData, SetOptions.merge()) // Merge para no sobrescribir otros campos
-                .addOnSuccessListener {
-                    Log.d("Firestore", "Image URL saved successfully: $imageUrl")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error saving image URL: ${e.message}")
-                }
-        }
+    private fun saveImageUrlToFirestore(
+        userId: String,
+        imageUrl: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val savingMessage = getString(R.string.saving_image, userId, imageUrl)
+        Log.d("Firestore", savingMessage)
+        FirebaseRepository.saveImageUrlToFirestore(userId, imageUrl, onSuccess, onFailure)
     }
 
     private fun loadUserImages() {
-        val storageRef = FirebaseStorage.getInstance().reference.child("${user?.userId}/")
-
-        // Verificar si la carpeta del usuario existe
-        storageRef.listAll().addOnSuccessListener { listResult ->
-            if (listResult.items.isNotEmpty()) {
-                // Si hay imágenes, cargarlas en los ImageViews
+        FirebaseRepository.loadUserImages(
+            userId,
+            onSuccess = { imageUris ->
                 val imageViews = listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
-                for ((index, item) in listResult.items.withIndex()) {
+                for ((index, uri) in imageUris.withIndex()) {
                     if (index < imageViews.size) {
-                        item.downloadUrl.addOnSuccessListener { uri ->
-                            loadImageIntoImageView(uri, imageViews[index])
-                        }.addOnFailureListener { exception ->
-                            Log.e("Firebase", "Error getting download URL: ${exception.message}")
-                        }
+                        loadImageIntoImageView(uri, imageViews[index])
                     }
                 }
-            } else {
-                Log.d("Firebase", "No images found for user: ${user?.userId}")
-                Toast.makeText(this, "No images found for user: ${user?.userId}", Toast.LENGTH_SHORT).show()
+                val loadSuccessMessage = getString(R.string.load_images_success, imageUris.size)
+                Log.d("Firebase", loadSuccessMessage)
+            },
+            onFailure = { e ->
+                val errorMessage = getString(R.string.load_images_error, e.message)
+                Log.e("Firebase", errorMessage)
+                Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
             }
-        }.addOnFailureListener { exception ->
-            Log.e("Firebase", "Error checking user folder: ${exception.message}")
-            Toast.makeText(this, "Error checking user folder: ${exception.message}", Toast.LENGTH_SHORT).show()
-        }
+        )
     }
+
+
+
 
     private fun loadImageIntoImageView(imageUri: Uri, imageView: ImageView) {
         // Usar Glide o Picasso para cargar la imagen en el ImageView
@@ -266,167 +270,129 @@ class PerfilActivity : AppCompatActivity() {
     }
 
     private fun loadUserInfo() {
-
-
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid == null) {
-            Toast.makeText(this, "Error: usuario no autenticado", Toast.LENGTH_SHORT).show()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: run {
+            Toast.makeText(this, getString(R.string.error_user_not_authenticated), Toast.LENGTH_SHORT).show()
             return
         }
 
-            val profileId = "profile_$uid"
-            db.collection("profiles").document(profileId)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document != null) {
-                        val name = document.getString("name") // Obtén el nombre del documento
-                        val birthdate = document.getString("birthdate") // Suponiendo que también tienes la edad
-                        val gender = document.getString("genero") // Y el género
-                        val description = document.getString("bio") // Y la descripcion
-                        val surname =  document.getString("surname") // Y el surname
-                        val edad = birthdate?.let { calcularEdad(it) } ?: "Desconocida"
+        FirebaseRepository.loadUserInfo(uid,
+            onSuccess = { data ->
+                val name = data["name"] as? String
+                val birthdate = data["birthdate"] as? String
+                val gender = data["genero"] as? String
+                val description = data["bio"] as? String
+                val surname = data["surname"] as? String
+                val edad = birthdate?.let { calcularEdad(it) } ?: "Desconocida"
 
-                        // Actualiza el TextView
-                        val userInfoText = "Name: $name\nSurname: $surname\nEdad: $edad\nGénero: $gender"
-                        findViewById<TextView>(R.id.userInfo).text = userInfoText
-                        descEdit.setText(description)
-
-                    } else {
-                        Log.d("Firestore", "No such document")
-                    }
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("Firestore", "Error getting documents: ", exception)
-                }
+                val userInfoText = getString(R.string.user_info_display, name, surname, edad, gender)
+                findViewById<TextView>(R.id.userInfo).text = userInfoText
+                descEdit.setText(description)
+            },
+            onFailure = { e ->
+                val errorMessage = getString(R.string.error_getting_user_info, e.message)
+                Log.e("Firestore", errorMessage, e)
+            }
+        )
     }
 
-    // Método para actualizar la descripción en la base de datos
-    private fun updateDescriptionInDatabase(description: String) {
-        user?.let { currentUser ->
-            val profileId = "profile_${currentUser.userId}"
-            db.collection("profiles").document(profileId)
-                .update("bio", description)
-                .addOnSuccessListener {
-                    Log.d("Firestore", "Descripción actualizada correctamente")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error al actualizar la descripción", e)
-                }
-        }
+
+    private fun updateDescriptionInDatabase(userId: String, description: String) {
+        FirebaseRepository.updateDescription(userId, description,
+            onSuccess = {
+                Log.d("Firestore", getString(R.string.description_updated))
+            },
+            onFailure = { e ->
+                val errorMessage = getString(R.string.error_updating_description, e.message)
+                Log.e("Firestore", errorMessage, e)
+            }
+        )
     }
 
-    private fun setupGenderSpinner(
-        spinner: Spinner,
-        firestoreFieldName: String,
-        getDefault: Boolean = true
-    ) {
-        db.collection("gender")
-            .get()
-            .addOnSuccessListener { documents ->
-                val genders = mutableListOf<String>()
-                for (document in documents) {
-                    val genderName = document.getString("name")
-                    genderName?.let { genders.add(it) }
-                }
-
+    private fun setupGenderSpinner(spinner: Spinner, fieldName: String) {
+        FirebaseRepository.loadGenders(
+            onSuccess = { genders ->
                 val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genders)
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinner.adapter = adapter
 
-                var isInitialized = false
-
-                spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                    override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                        if (isInitialized) {
-                            val selectedGender = genders[position]
-                            updateGenderInFirestore(firestoreFieldName, selectedGender)
-                        }
-                        isInitialized = true
-                    }
-
-                    override fun onNothingSelected(parent: AdapterView<*>) {}
-                }
-
-                if (getDefault) {
-                    setDefaultGenderSelection(spinner, genders, firestoreFieldName)
-                }
-
-            }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", "Error al cargar géneros", e)
-            }
-    }
-
-
-    private fun setDefaultGenderSelection(spinner: Spinner, genders: List<String>, fieldName: String) {
-        user?.let { currentUser ->
-            val profileId = "profile_${currentUser.userId}"
-            db.collection("profiles").document(profileId)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document != null) {
-                        val savedGender = document.getString(fieldName)
+                FirebaseRepository.getDefaultGender(
+                    userId,
+                    fieldName,
+                    onSuccess = { savedGender ->
                         savedGender?.let {
                             val position = genders.indexOf(it)
                             if (position >= 0) {
                                 spinner.setSelection(position)
                             }
                         }
+                    },
+                    onFailure = { e ->
+                        val errorMessage = getString(R.string.error_getting_field, fieldName, e.message)
+                        Log.e("PerfilActivity", errorMessage, e)
+                    }
+                )
+
+                spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                        val selectedGender = genders[position]
+                        FirebaseRepository.updateGender(
+                            userId,
+                            fieldName,
+                            selectedGender,
+                            onSuccess = {
+                                val updateMessage = getString(R.string.field_updated, fieldName, selectedGender)
+                                Log.d("PerfilActivity", updateMessage)
+                            },
+                            onFailure = { e ->
+                                val errorMessage = getString(R.string.error_updating_field, fieldName, e.message)
+                                Log.e("PerfilActivity", errorMessage, e)
+                            }
+                        )
+                    }
+
+                    override fun onNothingSelected(parent: AdapterView<*>) {
+                        // Nada
                     }
                 }
-                .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error obteniendo $fieldName", e)
-                }
-        }
+            },
+            onFailure = { e ->
+                val errorMessage = getString(R.string.error_loading_genders, e.message)
+                Log.e("PerfilActivity", errorMessage, e)
+            }
+        )
     }
 
 
-    private fun updateGenderInFirestore(fieldName: String, gender: String) {
-        user?.let { currentUser ->
-            val profileId = "profile_${currentUser.userId}"
-            db.collection("profiles").document(profileId)
-                .update(fieldName, gender)
-                .addOnSuccessListener {
-                    Log.d("Firestore", "$fieldName actualizado a $gender")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error actualizando $fieldName", e)
-                }
-        }
+
+    private fun loadNotificationSettings() {
+        FirebaseRepository.loadNotificationSettings(
+            userId,
+            onSuccess = { notificationsEnabled ->
+                notificationCheckBox.isChecked = notificationsEnabled
+            },
+            onFailure = { e ->
+                val errorMessage = getString(R.string.error_loading_notifications, e.message)
+                Log.e("PerfilActivity", errorMessage, e)
+            }
+        )
     }
 
 
-        private fun loadNotificationSettings() {
-            user?.let { currentUser ->
-                val profileId = "profile_${currentUser.userId}"
-                db.collection("profiles").document(profileId)
-                    .get()
-                    .addOnSuccessListener { document ->
-                        if (document != null) {
-                            val notificationsEnabled = document.getBoolean("notificaciones") ?: false
-                            notificationCheckBox.isChecked = notificationsEnabled
-                        }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Firestore", "Error al cargar la configuración de notificaciones", e)
-                    }
-            }
-        }
 
-
-        private fun updateNotificationSettingsInDatabase(enabled: Boolean) {
-            user?.let { currentUser ->
-                val profileId = "profile_${currentUser.userId}"
-                db.collection("profiles").document(profileId)
-                    .update("notificaciones", enabled)
-                    .addOnSuccessListener {
-                        Log.d("Firestore", "Configuración de notificaciones actualizada a $enabled")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Firestore", "Error al actualizar la configuración de notificaciones", e)
-                    }
+    private fun updateNotificationSettingsInDatabase(enabled: Boolean) {
+        FirebaseRepository.updateNotificationSettings(
+            userId,
+            enabled,
+            onSuccess = {
+                val updateMessage = getString(R.string.notifications_updated, enabled)
+                Log.d("PerfilActivity", updateMessage)
+            },
+            onFailure = { e ->
+                val errorMessage = getString(R.string.error_updating_notifications, e.message)
+                Log.e("PerfilActivity", errorMessage, e)
             }
-        }
+        )
+    }
 
     fun calcularEdad(fechaNacimiento: String): Int {
             val formatter = DateTimeFormatter.ofPattern("d/M/yyyy")

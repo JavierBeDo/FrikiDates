@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.frikidates.firebase.FirebaseRepository
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -47,29 +47,26 @@ class AdapterMensajes(private val c: Context, private val myUserId: String) : Re
 
         // Mostrar nombre y foto solo si es de otro usuario
         if (senderId != myUserId) {
-            FirebaseFirestore.getInstance().collection("profiles")
-                .document("profile_"+ senderId)
-                .get()
-                .addOnSuccessListener { doc ->
-                    val nombre = doc.getString("name") ?: "Desconocido"
-                    val fotoUrl = doc.getString("fotoPerfil") ?: ""
-
+            FirebaseRepository.getProfileData(
+                senderId,
+                onSuccess = { nombre, fotoUrl ->
                     cacheUsuarios[senderId] = Pair(nombre, fotoUrl)
-
-                   // holder.nombre.text = nombre
+                    // holder.nombre.text = nombre
                     if (fotoUrl.isNotEmpty()) {
                         // Glide.with(c).load(fotoUrl).into(holder.fotoMensajePerfil)
                     } else {
                         // holder.fotoMensajePerfil.setImageResource(R.mipmap.ic_launcher)
                     }
+                },
+                onFailure = { e ->
+                    Log.e("AdapterMensajes", c.getString(R.string.error_obteniendo_datos_usuario, e.message))
                 }
-                .addOnFailureListener {
-                    Log.e("AdapterMensajes", "Error obteniendo datos de usuario: ${it.message}")
-                }
+            )
         }
 
+
         // Mostrar texto o imagen
-        if (mensaje.type == "image") {
+        if (mensaje.type == c.getString(R.string.mensaje_tipo_imagen)) {
             holder.fotoMensaje.visibility = View.VISIBLE
             holder.mensaje.visibility = View.GONE
             Glide.with(c).load(mensaje.text).into(holder.fotoMensaje)

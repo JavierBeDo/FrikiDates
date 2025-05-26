@@ -10,9 +10,9 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import me.relex.circleindicator.CircleIndicator3
 
-class CardStackAdapter(
-    private val context: Context,
-    private var profiles: List<Profile>
+class   CardStackAdapter(
+    private var profiles: List<Profile>,
+    private val c: Context
 ) : RecyclerView.Adapter<CardStackAdapter.ViewHolder>() {
 
     // ViewHolder se mantiene igual...
@@ -39,7 +39,7 @@ class CardStackAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val profile = profiles[position]
 
-        val imageAdapter = ImagePagerAdapter(context, profile.images)
+        val imageAdapter = ImagePagerAdapter(c, profile.images)
         holder.imagePager.adapter = imageAdapter
         // ... (código del ViewPager e indicador igual) ...
         holder.indicator.setViewPager(holder.imagePager)
@@ -49,7 +49,11 @@ class CardStackAdapter(
         holder.nameText.text = profile.name
 
         // << CAMBIO: Usar profile.age directamente
-        holder.ageText.text = if (profile.age > 0) "Edad: ${profile.age}" else "Edad: N/D"
+        holder.ageText.text = if (profile.age > 0)
+            c.getString(R.string.age_with_value, profile.age)
+        else
+            c.getString(R.string.age_not_available)
+
         holder.genderText.text = profile.gender
         holder.locationText.text = profile.city
         holder.compatibilityText.text = profile.compatibility
@@ -98,8 +102,4 @@ class CardStackAdapter(
 
     override fun getItemCount(): Int = profiles.size
 
-    fun submitList(newProfiles: List<Profile>) {
-        profiles = newProfiles
-        notifyDataSetChanged()
-    }
 }

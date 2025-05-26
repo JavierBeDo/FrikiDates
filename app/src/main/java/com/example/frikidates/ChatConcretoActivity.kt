@@ -1,40 +1,30 @@
 package com.example.frikidates
 
-import MensajeEnviar
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.frikidates.firebase.FirebaseRepository
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.DocumentChange
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.storage.FirebaseStorage
 import de.hdodenhof.circleimageview.CircleImageView
-import com.google.firebase.database.ValueEventListener
+
 
 
 class ChatConcretoActivity : BaseActivity() {
 
     private lateinit var fotoPerfil: CircleImageView
-    private lateinit var nombre: TextView
+    private lateinit var nombreTextView: TextView
     private lateinit var rvMensajes: RecyclerView
     private lateinit var txtMensaje: EditText
     private lateinit var btnEnviar: ImageButton
@@ -55,7 +45,7 @@ class ChatConcretoActivity : BaseActivity() {
 
         // ==== Vistas ====
         fotoPerfil   = findViewById(R.id.profile_image_2)
-        nombre       = findViewById(R.id.username)
+        nombreTextView = findViewById(R.id.username)
         rvMensajes   = findViewById(R.id.rvMensajes)
         txtMensaje   = findViewById(R.id.message_input)
         btnEnviar    = findViewById(R.id.send_button)
@@ -71,135 +61,61 @@ class ChatConcretoActivity : BaseActivity() {
         rvMensajes.adapter = adapter
 
         // Dentro de onCreate, después de recibir matchId:
-        val matchId = intent.getStringExtra("matchId") ?: "match_1"
-        val db = FirebaseFirestore.getInstance()
-
-// Obtener el matchedUserId desde el documento del match
-        db.collection("matches")
-            .document(matchId)
-            .get()
-            .addOnSuccessListener { matchDoc ->
-                val matchedUserId = matchDoc.getString("matchedUserId") ?: return@addOnSuccessListener
-
-                // === 1. Obtener nombre del usuario ===
-                db.collection("profiles")
-                    .document(matchedUserId)
-                    .get()
-                    .addOnSuccessListener { profileDoc ->
-                        val nombreReal = profileDoc.getString("name") ?: "Usuario"
-                        nombre.text = nombreReal
-
-                        // === 2. Obtener imagen de perfil ===
-                        val folderName = matchedUserId.removePrefix("profile_")
-                        val estadoRef = FirebaseDatabase.getInstance("https://frikidatesdb-default-rtdb.europe-west1.firebasedatabase.app")
-                            .getReference("user/$folderName/status")
-
-                        estadoRef.addValueEventListener(object : ValueEventListener {
-                            override fun onDataChange(snapshot: DataSnapshot) {
-                                val estado = snapshot.getValue(String::class.java)
-                                Log.d("EstadoUsuario", "Snapshot recibido con estado: $estado")
-                                if (estado == "active") {
-                                    estadoUsuario.setImageResource(R.drawable.circle_online)
-                                } else {
-                                    estadoUsuario.setImageResource(R.drawable.circle_inactive)
-                                }
-                            }
-                            override fun onCancelled(error: DatabaseError) {
-                                Log.e("EstadoUsuario", "Error consultando estado: ${error.message}")
-                            }
-                        })
-
-                        val user = FirebaseAuth.getInstance().currentUser
-                        if (user == null) {
-                            Log.e("BaseActivity", "Usuario no autenticado, no se puede actualizar estado")
-                            return@addOnSuccessListener
-                        }
-                        Log.d("BaseActivity", "Usuario autenticado: ${user.uid}")
-                        Log.d("BaseActivity", "el otro: $folderName")
-                        Log.d("EstadoUsuario", "Escuchando en ruta: user/$folderName/status")
+        val matchId = intent.getStringExtra("matchId") ?: getString(R.string.default_match_id)
 
 
+        FirebaseRepository.getMatchedUserId(matchId, { matchedUserId ->
 
-                        val storageRef = FirebaseStorage.getInstance().reference.child(folderName)
-
-                        storageRef.listAll()
-                            .addOnSuccessListener { result ->
-                                val primeraImagen = result.items.firstOrNull()
-                                if (primeraImagen != null) {
-                                    primeraImagen.downloadUrl.addOnSuccessListener { uri ->
-                                        Glide.with(this)
-                                            .load(uri)
-                                            .placeholder(R.drawable.default_avatar)
-                                            .circleCrop()
-                                            .into(fotoPerfil)
-                                    }
-                                } else {
-                                    fotoPerfil.setImageResource(R.drawable.default_avatar)
-                                }
-                            }
-                            .addOnFailureListener {
-                                fotoPerfil.setImageResource(R.drawable.default_avatar)
-                            }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("ChatConcreto", "Error obteniendo perfil: ${e.message}")
-                    }
-            }
-            .addOnFailureListener { e ->
-                Log.e("ChatConcreto", "Error obteniendo matchedUserId: ${e.message}")
-            }
-
-
-
-        // ==== 2) Envío de texto ====
-        btnEnviar.setOnClickListener {
-            val mensajeTexto = txtMensaje.text.toString().trim()
-            if (mensajeTexto.isNotEmpty()) {
-                val mensaje = MensajeEnviar(
-                    senderId = senderId,
-                    text      = mensajeTexto,
-                    timestamp = FieldValue.serverTimestamp(),
-                    type      = "text"
-                )
-                db.collection("matches")
-                    .document(matchId)
-                    .collection("messages")
-                    .document("mensaje_${System.currentTimeMillis()}")
-                    .set(mensaje)
-                    .addOnSuccessListener { txtMensaje.text.clear() }
-                    .addOnFailureListener { e ->
-                        Log.e("ChatConcreto", "Error enviando mensaje: ${e.message}")
-                    }
-            }
-        }
-
-        // ==== 3) Envío de foto ====
-        btnEnviarFoto.setOnClickListener {
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "image/jpeg"; putExtra(Intent.EXTRA_LOCAL_ONLY, true)
-            }
-            startActivityForResult(
-                Intent.createChooser(intent, "Selecciona una foto"), PHOTO_SEND
+            FirebaseRepository.getUserNameAndObserveStatus(matchedUserId,
+                onNameReceived = { nombre -> nombreTextView.text = nombre },
+                onStatusChanged = { estado ->
+                    estadoUsuario.setImageResource(if (estado == "active") R.drawable.circle_online else R.drawable.circle_inactive)
+                },
+                onError = { e ->Log.e("ChatConcreto", getString(R.string.error_getting_profile_or_status, e.message)) }
             )
+
+            FirebaseRepository.getFirstProfileImage(matchedUserId,
+                onSuccess = { uri ->
+                    Glide.with(this).load(uri).placeholder(R.drawable.default_avatar).circleCrop().into(fotoPerfil)
+                },
+                onFailure = {
+                    fotoPerfil.setImageResource(R.drawable.default_avatar)
+                }
+            )
+
+        }, { e ->
+            Log.e("ChatConcreto", getString(R.string.error_getting_matched_user_id, e.message))
+        })
+
+        btnEnviar.setOnClickListener {
+            val texto = txtMensaje.text.toString().trim()
+            if (texto.isNotEmpty()) {
+                FirebaseRepository.sendTextMessage(matchId, senderId, texto, {
+                    txtMensaje.text.clear()
+                }, { e ->
+                    Log.e("ChatConcreto", getString(R.string.error_sending_message, e.message))
+                })
+            }
         }
 
-        // ==== 4) Listener de nuevos mensajes ====
-        db.collection("matches")
-            .document(matchId)
-            .collection("messages")
-            .orderBy("timestamp", Query.Direction.ASCENDING)
-            .addSnapshotListener { snaps, error ->
-                if (error != null) {
-                    Log.e("ChatConcreto", "Error escuchando mensajes: ${error.message}")
-                    return@addSnapshotListener
-                }
-                for (dc in snaps!!.documentChanges) {
-                    if (dc.type == DocumentChange.Type.ADDED) {
-                        val msg = dc.document.toObject(MensajeRecibir::class.java)
-                        adapter.addMensaje(msg)
-                    }
-                }
+        FirebaseRepository.listenMessages(matchId, { msg ->
+            adapter.addMensaje(msg)
+        }, { e ->
+            Log.e("ChatConcreto", getString(R.string.error_listening_messages, e.message))
+        })
+
+        btnEnviarFoto.setOnClickListener {
+            openImageSelector()
+        }
+
+        FirebaseRepository.listenMessages(matchId,
+            onNewMessage = { msg ->
+                adapter.addMensaje(msg)
+            },
+            onError = { e ->
+                Log.e("ChatConcreto", getString(R.string.error_listening_messages, e.message))
             }
+        )
 
         adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(posStart: Int, itemCount: Int) {
@@ -208,6 +124,7 @@ class ChatConcretoActivity : BaseActivity() {
             }
         })
 
+
         val menuButton = findViewById<ImageView>(R.id.menu_boton)
         menuButton.setOnClickListener {
             val popup = PopupMenu(this, menuButton)
@@ -215,11 +132,11 @@ class ChatConcretoActivity : BaseActivity() {
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.menu_deshacer_match -> {
-                        showAlertDialog("¿Estás seguro de que deseas deshacer el match?")
+                        showAlertDialog(getString(R.string.dialog_message_unmatch))
                         true
                     }
                     R.id.menu_denunciar -> {
-                        showAlertDialog("¿Deseas denunciar a este usuario?")
+                        showAlertDialog(getString(R.string.dialog_message_report))
                         true
                     }
                     else -> false
@@ -230,20 +147,23 @@ class ChatConcretoActivity : BaseActivity() {
 
     }
 
-
-
     private fun showAlertDialog(message: String) {
         AlertDialog.Builder(this)
-            .setTitle("Confirmación")
+            .setTitle(getString(R.string.dialog_title_confirmation))
             .setMessage(message)
-            .setPositiveButton("Sí") { dialog, _ ->
-                // Aquí va la lógica para deshacer match o denunciar
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancelar") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setPositiveButton(getString(R.string.dialog_positive_button)) { dialog, _ -> dialog.dismiss() }
+            .setNegativeButton(getString(R.string.dialog_negative_button)) { dialog, _ -> dialog.dismiss() }
             .show()
+
+    }
+
+    private fun openImageSelector() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "image/jpeg"
+            putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+        }
+        startActivityForResult(Intent.createChooser(intent, getString(R.string.select_photo)), PHOTO_SEND)
+
     }
 
 }

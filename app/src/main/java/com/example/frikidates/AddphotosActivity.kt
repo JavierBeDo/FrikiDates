@@ -2,10 +2,10 @@ package com.example.frikidates
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -16,13 +16,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
-import com.google.firebase.storage.FirebaseStorage
-import java.io.ByteArrayOutputStream
-import java.util.*
+import com.example.frikidates.firebase.FirebaseRepository
 
-class AddphotosActivity : AppCompatActivity() {
+
+class AddphotosActivity(private val c: Context) : AppCompatActivity() {
 
     private lateinit var imageView1: ImageView
     private lateinit var imageView2: ImageView
@@ -41,12 +38,13 @@ class AddphotosActivity : AppCompatActivity() {
     private val REQUEST_CODE_CAMERA = 1002
     private val REQUEST_CODE_STORAGE_PERMISSION = 1003
 
-    private val db = FirebaseFirestore.getInstance()
+    private lateinit var userId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo)
 
+        userId = user?.userId ?: return
         userPreferences = UserPreferences(this)
         user = userPreferences.getUser()
 
@@ -59,7 +57,8 @@ class AddphotosActivity : AppCompatActivity() {
         iv_camera = findViewById(R.id.iv_camera)
         buttonUpload = findViewById(R.id.buttonUpload)
 
-        val imageViews = listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
+        val imageViews =
+            listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
         for (imageView in imageViews) {
             imageView.setOnClickListener {
                 selectedImageView = imageView
@@ -102,6 +101,7 @@ class AddphotosActivity : AppCompatActivity() {
                         uploadImageToFirebaseStorage(selectedImage)
                     }
                 }
+
                 REQUEST_CODE_CAMERA -> {
                     data?.extras?.get("data")?.let { imageBitmap ->
                         val bitmap = imageBitmap as Bitmap
@@ -129,75 +129,29 @@ class AddphotosActivity : AppCompatActivity() {
     }
 
     private fun uploadImageToFirebaseStorage(image: Any) {
-        when (image) {
-            is Bitmap -> {
-                val baos = ByteArrayOutputStream()
-                image.compress(Bitmap.CompressFormat.JPEG, 75, baos)
-                val data = baos.toByteArray()
-                val storageRef = FirebaseStorage.getInstance().reference
-                    .child("${user?.userId}/${UUID.randomUUID()}.jpg")
-
-                storageRef.putBytes(data)
-                    .addOnSuccessListener {
-                        storageRef.downloadUrl.addOnSuccessListener { uri ->
-                            saveImageUrlToFirestore(uri.toString())
-                        }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Upload", "Error: ${e.message}")
-                    }
-            }
-
-            is Uri -> {
-                val storageRef = FirebaseStorage.getInstance().reference
-                    .child("${user?.userId}/${UUID.randomUUID()}.jpg")
-
-                storageRef.putFile(image)
-                    .addOnSuccessListener {
-                        storageRef.downloadUrl.addOnSuccessListener { uri ->
-                            saveImageUrlToFirestore(uri.toString())
-                        }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Upload", "Error: ${e.message}")
-                    }
-            }
-        }
-    }
-
-    private fun saveImageUrlToFirestore(imageUrl: String) {
-        val userId = user?.userId ?: return
-        val imageData = hashMapOf("imageUrl" to imageUrl)
-
-        db.collection("users").document(userId)
-            .set(imageData, SetOptions.merge())
-            .addOnSuccessListener {
-                Log.d("Firestore", "Image URL saved: $imageUrl")
-            }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", "Error saving image: ${e.message}")
-            }
+        FirebaseRepository.uploadImage(userId, image, { imageUrl ->
+            FirebaseRepository.saveImageUrl(userId, imageUrl, {
+                Log.d(c.getString(R.string.tag_firestore), "Image URL saved: $imageUrl")
+            }, { e ->
+                Log.e(c.getString(R.string.tag_firestore), "Error saving image: ${e.message}")
+            })
+        }, { e ->
+            Log.e(c.getString(R.string.tag_upload), "Error: ${e.message}")
+        })
     }
 
     private fun loadUserImages() {
-        val userId = user?.userId ?: return
-        val storageRef = FirebaseStorage.getInstance().reference.child("$userId/")
-
-        storageRef.listAll()
-            .addOnSuccessListener { list ->
-                val imageViews = listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
-                for ((index, item) in list.items.withIndex()) {
-                    if (index < imageViews.size) {
-                        item.downloadUrl.addOnSuccessListener { uri ->
-                            Glide.with(this)
-                                .load(uri)
-                                .into(imageViews[index])
-                        }
-                    }
+        FirebaseRepository.loadUserImages(userId, { urls ->
+            val imageViews =
+                listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
+            for ((index, url) in urls.withIndex()) {
+                if (index < imageViews.size) {
+                    Glide.with(this).load(url).into(imageViews[index])
                 }
             }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error al cargar imágenes", Toast.LENGTH_SHORT).show()
-            }
+        }, { e ->
+            Toast.makeText(this, getString(R.string.error_loading_images), Toast.LENGTH_SHORT).show()
+        })
+
     }
 }
