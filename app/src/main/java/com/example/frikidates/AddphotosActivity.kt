@@ -134,11 +134,12 @@ class AddphotosActivity(private val c: Context) : AppCompatActivity() {
                 Log.d(c.getString(R.string.tag_firestore), "Image URL saved: $imageUrl")
             }, { e ->
                 Log.e(c.getString(R.string.tag_firestore), "Error saving image: ${e.message}")
-            })
+            }, c) // ← Aquí pasas el Context correctamente
         }, { e ->
             Log.e(c.getString(R.string.tag_upload), "Error: ${e.message}")
         })
     }
+
 
     private fun loadUserImages() {
         FirebaseRepository.loadUserImages(userId, { urls ->

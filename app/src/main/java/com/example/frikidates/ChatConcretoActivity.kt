@@ -64,39 +64,51 @@ class ChatConcretoActivity : BaseActivity() {
         val matchId = intent.getStringExtra("matchId") ?: getString(R.string.default_match_id)
 
 
-        FirebaseRepository.getMatchedUserId(matchId, { matchedUserId ->
+        FirebaseRepository.getMatchedUserId(
+            context = this,
+            userId = matchId,
+            onSuccess = { matchedUserId ->
 
-            FirebaseRepository.getUserNameAndObserveStatus(matchedUserId,
-                onNameReceived = { nombre -> nombreTextView.text = nombre },
-                onStatusChanged = { estado ->
-                    estadoUsuario.setImageResource(if (estado == "active") R.drawable.circle_online else R.drawable.circle_inactive)
-                },
-                onError = { e ->Log.e("ChatConcreto", getString(R.string.error_getting_profile_or_status, e.message)) }
-            )
-
-            FirebaseRepository.getFirstProfileImage(matchedUserId,
-                onSuccess = { uri ->
-                    Glide.with(this).load(uri).placeholder(R.drawable.default_avatar).circleCrop().into(fotoPerfil)
-                },
-                onFailure = {
-                    fotoPerfil.setImageResource(R.drawable.default_avatar)
+                if (matchedUserId.isBlank()) {
+                    Log.e("ChatConcreto", getString(R.string.error_getting_matched_user_id))
+                    return@getMatchedUserId
                 }
-            )
 
-        }, { e ->
-            Log.e("ChatConcreto", getString(R.string.error_getting_matched_user_id, e.message))
-        })
+                FirebaseRepository.getUserNameAndObserveStatus(
+                    context = this,
+                    matchedUserId = matchedUserId,
+                    onNameReceived = { nombre ->
+                        nombreTextView.text = nombre
+                    },
+                    onStatusChanged = { estado ->
+                        val resId = if (estado == "active") R.drawable.circle_online else R.drawable.circle_inactive
+                        estadoUsuario.setImageResource(resId)
+                    },
+                    onError = { e ->
+                        Log.e("ChatConcreto", getString(R.string.error_getting_profile_or_status, e.message ?: ""))
+                    }
+                )
 
-        btnEnviar.setOnClickListener {
-            val texto = txtMensaje.text.toString().trim()
-            if (texto.isNotEmpty()) {
-                FirebaseRepository.sendTextMessage(matchId, senderId, texto, {
-                    txtMensaje.text.clear()
-                }, { e ->
-                    Log.e("ChatConcreto", getString(R.string.error_sending_message, e.message))
-                })
+                FirebaseRepository.getFirstProfileImage(
+                    matchedUserId = matchedUserId,
+                    onSuccess = { uri ->
+                        Glide.with(this)
+                            .load(uri)
+                            .placeholder(R.drawable.default_avatar)
+                            .circleCrop()
+                            .into(fotoPerfil)
+                    },
+                    onFailure = {
+                        fotoPerfil.setImageResource(R.drawable.default_avatar)
+                    }
+                )
+
+            },
+            onFailure = { e ->
+                Log.e("ChatConcreto", getString(R.string.error_getting_matched_user_id, e.message ?: ""))
             }
-        }
+        )
+
 
         FirebaseRepository.listenMessages(matchId, { msg ->
             adapter.addMensaje(msg)

@@ -206,11 +206,11 @@ object FirebaseRepository {
     }
 
     fun saveImageUrl(
-        context: Context,
         userId: String,
         imageUrl: String,
         onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
+        onFailure: (Exception) -> Unit,
+        context: Context
     ) {
         val imageData = hashMapOf("imageUrl" to imageUrl)
         FirebaseFirestore.getInstance().collection("users")
