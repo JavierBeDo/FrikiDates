@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
     id "com.github.ben-manes.versions"
+    id "kotlin-parcelize"
 
 }
 

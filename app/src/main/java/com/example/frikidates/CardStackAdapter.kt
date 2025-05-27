@@ -12,7 +12,10 @@ import me.relex.circleindicator.CircleIndicator3
 
 class CardStackAdapter(
     private val context: Context,
-    private var profiles: List<Profile>
+    private var profiles: List<Profile>,
+    private val currentUserInterests: List<String>,
+    private val currentUserLatitude: Double,
+    private val currentUserLongitude: Double
 ) : RecyclerView.Adapter<CardStackAdapter.ViewHolder>() {
 
     // ViewHolder se mantiene igual...
@@ -47,11 +50,55 @@ class CardStackAdapter(
 
         holder.nameText.text = profile.name
 
-        // << CAMBIO: Usar profile.age directamente
-        holder.ageText.text = if (profile.age > 0) "Edad: ${profile.age}" else "Edad: N/D"
-        holder.genderText.text = profile.gender
-        holder.locationText.text = profile.city
-        holder.compatibilityText.text = profile.compatibility
+        val edad = calcularEdad(profile.birthdate)
+        holder.ageText.text = if (edad > 0) "Edad: $edad" else "Edad: N/D"
+        holder.genderText.text = when (profile.gender.lowercase()) {
+            "hombre", "masculino" -> "\u2642" // ♂
+            "mujer", "femenino" -> "\u2640"   // ♀
+            "otro", "no binario", "no especificado" -> "\u26A7" // ⚧
+            else -> "?" // desconocido
+        }
+        val commonInterests = profile.interests.intersect(currentUserInterests.toSet())
+        val compatibilityPercentage = if (currentUserInterests.isNotEmpty()) {
+            (commonInterests.size * 100) / currentUserInterests.size
+        } else 0
+
+        when {
+            compatibilityPercentage < 40 -> {
+                holder.compatibilityText.text = "Poco compatible"
+                holder.compatibilityText.setTextColor(context.getColor(android.R.color.holo_red_dark))
+            }
+
+            compatibilityPercentage in 40..69 -> {
+                holder.compatibilityText.text = "Compatible"
+                holder.compatibilityText.setTextColor(context.getColor(android.R.color.holo_orange_dark))
+            }
+
+            else -> {
+                holder.compatibilityText.text = "Muy compatible"
+                holder.compatibilityText.setTextColor(context.getColor(android.R.color.holo_green_dark))
+            }
+        }
+
+        // Supongamos que tienes la ubicación del usuario actual en estas variables:
+        val latUsuarioActual = currentUserLatitude
+        val lonUsuarioActual = currentUserLongitude
+
+        // Parsear ubicación del perfil
+        val ubicacion = profile.encryptedLocation.split(",")
+        if (ubicacion.size == 2) {
+            val lat = ubicacion[0].toDoubleOrNull()
+            val lon = ubicacion[1].toDoubleOrNull()
+            if (lat != null && lon != null) {
+                val distancia = calcularDistancia(latUsuarioActual, lonUsuarioActual, lat, lon)
+                holder.locationText.text = "A ${"%.1f".format(distancia)} km de distancia"
+            } else {
+                holder.locationText.text = "Distancia: N/D"
+            }
+        } else {
+            holder.locationText.text = "Distancia: N/D"
+        }
+
 
         // ... (resto del código de onBindViewHolder para botones y callback se mantiene igual) ...
         fun updateImageNavigationButtonsVisibility() {
@@ -98,4 +145,49 @@ class CardStackAdapter(
     }
 
     override fun getItemCount(): Int = profiles.size
+
+    //TODO quitar esto de aqui
+    private fun calcularEdad(fechaNacimiento: String): Int {
+        return try {
+            val partes = fechaNacimiento.split("/") // Espera "dd/MM/yyyy"
+            if (partes.size != 3) return 0
+
+            val anio = partes[2].toInt()
+            val mes = partes[1].toInt()
+            val dia = partes[0].toInt()
+
+            val hoy = java.util.Calendar.getInstance()
+            val nacimiento = java.util.Calendar.getInstance()
+            nacimiento.set(anio, mes - 1, dia)
+
+            var edad = hoy.get(java.util.Calendar.YEAR) - nacimiento.get(java.util.Calendar.YEAR)
+
+            if (hoy.get(java.util.Calendar.DAY_OF_YEAR) < nacimiento.get(java.util.Calendar.DAY_OF_YEAR)) {
+                edad--
+            }
+
+            edad
+        } catch (e: Exception) {
+            0 // Si hay error, retorna 0
+        }
+    }
+
+    private fun calcularDistancia(
+        lat1: Double, lon1: Double,
+        lat2: Double, lon2: Double
+    ): Double {
+        val radioTierra = 6371.0 // Radio de la Tierra en km
+
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+        return radioTierra * c
+    }
+
 }

@@ -26,7 +26,6 @@ import com.yuyakaido.android.cardstackview.Direction
 import com.yuyakaido.android.cardstackview.RewindAnimationSetting
 import com.yuyakaido.android.cardstackview.SwipeAnimationSetting
 
-
 class MainMenuActivity : AppCompatActivity() {
 
     private lateinit var nav_profile: ImageView
@@ -41,6 +40,9 @@ class MainMenuActivity : AppCompatActivity() {
     private lateinit var locationPermissionRequest: ActivityResultLauncher<String>
 
     private val profilesList = mutableListOf<Profile>()
+    private var currentUserInterests = listOf<String>()
+    private var currentUserLatitude: Double = 0.0
+    private var currentUserLongitude: Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,9 +68,11 @@ class MainMenuActivity : AppCompatActivity() {
                     "Necesitamos tu ubicación para mostrarte personas cercanas",
                     Toast.LENGTH_LONG
                 ).show()
+                // Cargar perfiles sin ubicación
+                loadCurrentUserInterestsAndProfiles()
             }
-
         }
+
         // Lanza la petición
         solicitarPermisoUbicacion()
 
@@ -83,7 +87,6 @@ class MainMenuActivity : AppCompatActivity() {
             override fun onCardDisappeared(view: android.view.View?, position: Int) {}
         })
         cardStackView.layoutManager = manager
-        loadProfilesFromFirestore()
 
         // Acciones navegación
         nav_chat.setOnClickListener {
@@ -122,19 +125,43 @@ class MainMenuActivity : AppCompatActivity() {
             manager.setRewindAnimationSetting(setting)
             cardStackView.rewind()
         }
+    }
 
+    private fun loadCurrentUserInterestsAndProfiles() {
+        val db = FirebaseFirestore.getInstance()
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.w("Firestore", "Usuario actual no logueado, no se pueden cargar perfiles.")
+            cardStackView.adapter = CardStackAdapter(this, emptyList(), emptyList(), 0.0, 0.0)
+            return
+        }
 
+        // Obtener intereses del usuario actual
+        db.collection("profiles").document("profile_${currentUser.uid}")
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    currentUserInterests = (document.get("interests") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                    loadProfilesFromFirestore()
+                } else {
+                    Log.w("Firestore", "Perfil del usuario actual no encontrado.")
+                    cardStackView.adapter = CardStackAdapter(this, emptyList(), emptyList(), 0.0, 0.0)
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error al obtener intereses del usuario actual", exception)
+                cardStackView.adapter = CardStackAdapter(this, emptyList(), emptyList(), 0.0, 0.0)
+            }
     }
 
     private fun loadProfilesFromFirestore() {
         val db = FirebaseFirestore.getInstance()
         val currentUser = FirebaseAuth.getInstance().currentUser
-        val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
+        val currentUserEmail = currentUser?.email
 
         if (currentUser == null) {
             Log.w("Firestore", "Usuario actual no logueado, no se pueden cargar perfiles.")
-            // Aquí podrías limpiar el adaptador o mostrar un mensaje al usuario
-            cardStackView.adapter = CardStackAdapter(this, emptyList()) // Ejemplo de limpiar
+            cardStackView.adapter = CardStackAdapter(this, emptyList(), emptyList(), 0.0, 0.0)
             return
         }
 
@@ -143,63 +170,61 @@ class MainMenuActivity : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 if (result.isEmpty) {
                     Log.d("Firestore", "No se encontraron perfiles.")
-                    cardStackView.adapter = CardStackAdapter(this@MainMenuActivity, emptyList())
+                    cardStackView.adapter = CardStackAdapter(this, emptyList(), currentUserInterests, currentUserLatitude, currentUserLongitude)
                     return@addOnSuccessListener
                 }
-                val profilesToProcess = result.documents.filter { it.getString("email") != currentUserEmail } // TODO cambiar filtros de los perfiles a procesar
+
+                val profilesToProcess = result.documents.filter { it.getString("email") != currentUserEmail }
                 val potentialMatchesCount = profilesToProcess.size
                 if (potentialMatchesCount == 0) {
                     Log.d("Firestore", "No hay otros perfiles para mostrar.")
-                    cardStackView.adapter = CardStackAdapter(this@MainMenuActivity, emptyList())
+                    cardStackView.adapter = CardStackAdapter(this, emptyList(), currentUserInterests, currentUserLatitude, currentUserLongitude)
                     return@addOnSuccessListener
                 }
                 var processedPotentialMatches = 0
 
-                for (document in result) {
+                for (document in profilesToProcess) {
                     val profileDocumentId = document.id
-                    val data = document.data
+                    val data = document.data ?: continue
 
                     val email = data["email"] as? String ?: continue
-                    if (email == currentUserEmail) {
-                        continue
-                    }
+                    if (email == currentUserEmail) continue
 
                     val name = data["name"] as? String ?: ""
-                    val age = 23 //TODO obtener edad de firebase
+                    val birthdate = data["birthdate"] as? String ?: ""
                     val gender = data["genero"] as? String ?: "Género desconocido"
-                    val city = data["city"] as? String ?: "Ubicación desconocida"
-                    val compatibility = "Compatibilidad desconocida"
-
-                    //val interests = (data["interests"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                    val encryptedLocation = data["encryptedLocation"] as? String ?: ""
+                    val interests = (data["interests"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
 
                     loadAllProfileImages(profileDocumentId) { imageUrls ->
                         val profile = Profile(
+                            id = profileDocumentId,
                             name = name,
-                            age = age,
+                            birthdate = birthdate,
                             gender = gender,
-                            city = city,
-                            compatibility = compatibility,
+                            encryptedLocation = encryptedLocation,
+                            interests = interests,
                             images = imageUrls
                         )
                         profilesList.add(profile)
                         processedPotentialMatches++
 
                         if (processedPotentialMatches == potentialMatchesCount) {
-                            // << CAMBIO AQUÍ: Pasar 'this@MainMenuActivity' para el Context
-                            cardStackView.adapter =
-                                CardStackAdapter(this@MainMenuActivity, profilesList)
-                            Log.d(
-                                "Firestore",
-                                "Adaptador actualizado con ${profilesList.size} perfiles."
+                            cardStackView.adapter = CardStackAdapter(
+                                this@MainMenuActivity,
+                                profilesList,
+                                currentUserInterests,
+                                currentUserLatitude,
+                                currentUserLongitude
                             )
+                            Log.d("Firestore", "Adaptador actualizado con ${profilesList.size} perfiles.")
                         }
                     }
                 }
             }
             .addOnFailureListener { exception ->
                 Log.e("Firestore", "Error al cargar perfiles", exception)
-                // Opcionalmente, mostrar un mensaje de error o un estado vacío
-                cardStackView.adapter = CardStackAdapter(this@MainMenuActivity, emptyList())
+                cardStackView.adapter = CardStackAdapter(this, emptyList(), currentUserInterests, currentUserLatitude, currentUserLongitude)
             }
     }
 
@@ -270,35 +295,33 @@ class MainMenuActivity : AppCompatActivity() {
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     if (location == null) {
-                        Log.w(
-                            "Location",
-                            "Ubicación es null, no se pudo obtener la ubicación actual."
-                        )
+                        Log.w("Location", "Ubicación es null, no se pudo obtener la ubicación actual.")
                         Toast.makeText(
                             this,
                             "No se pudo obtener tu ubicación. Intenta más tarde.",
                             Toast.LENGTH_SHORT
                         ).show()
+                        loadCurrentUserInterestsAndProfiles()
                         return@addOnSuccessListener
                     }
 
-                    val lat = location.latitude
-                    val lon = location.longitude
-                    val encryptedLocation = LocationEncryptionHelper.encryptLocation(lat, lon)
+                    currentUserLatitude = location.latitude
+                    currentUserLongitude = location.longitude
+                    val encryptedLocation = LocationEncryptionHelper.encryptLocation(currentUserLatitude, currentUserLongitude)
 
-                    // Comprobar si la ubicación descifrada es válida (no 0.0)
-                    if (lat == 0.0 && lon == 0.0) {
+                    if (currentUserLatitude == 0.0 && currentUserLongitude == 0.0) {
                         Log.w("Location", "Ubicación descifrada inválida: lat y lon son 0.0")
                         Toast.makeText(
                             this,
                             "Ubicación inválida detectada. Intenta reiniciar la app.",
                             Toast.LENGTH_SHORT
                         ).show()
-                        // Opcional: aquí podrías intentar obtener la ubicación de nuevo o pedir al usuario que active GPS
+                        loadCurrentUserInterestsAndProfiles()
                         return@addOnSuccessListener
                     }
 
-                    saveToFirebase(encryptedLocation, lat, lon)
+                    saveToFirebase(encryptedLocation, currentUserLatitude, currentUserLongitude)
+                    loadCurrentUserInterestsAndProfiles()
                 }
                 .addOnFailureListener { e ->
                     Log.e("Location", "Error al obtener la ubicación", e)
@@ -307,20 +330,21 @@ class MainMenuActivity : AppCompatActivity() {
                         "Error al obtener ubicación: ${e.localizedMessage}",
                         Toast.LENGTH_SHORT
                     ).show()
+                    loadCurrentUserInterestsAndProfiles()
                 }
         } else {
             Log.w("Location", "Permiso de ubicación no concedido")
             Toast.makeText(this, "Permiso de ubicación no concedido", Toast.LENGTH_SHORT).show()
+            loadCurrentUserInterestsAndProfiles()
         }
     }
-
 
     private fun saveToFirebase(encryptedLocation: String, newLat: Double, newLon: Double) {
         val db = FirebaseFirestore.getInstance()
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val profileRef = db.collection("profiles").document("profile_$userId")
         val locationCollectionRef = profileRef.collection("location")
-        val lastLocationDocRef = locationCollectionRef.document("actual") // documento único para la última ubicación
+        val lastLocationDocRef = locationCollectionRef.document("actual")
 
         if (!LocationEncryptionHelper.isKeyValid()) {
             Log.w("Ubicación", "Clave eliminada. Limpiando datos de ubicación antigua.")
@@ -331,7 +355,7 @@ class MainMenuActivity : AppCompatActivity() {
                 .addOnFailureListener {
                     Log.e("Ubicación", "Error al eliminar la ubicación anterior", it)
                 }
-            return // Salir sin guardar nueva ubicación
+            return
         }
 
         lastLocationDocRef.get().addOnSuccessListener { document ->
