@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F5F5F5">
 
     <!-- Scrollable content -->
     <ScrollView
@@ -21,174 +22,179 @@
             android:layout_height="wrap_content"
             android:padding="16dp">
 
-            <!-- Título -->
-            <TextView
-                android:id="@+id/appTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="FrikiDates"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <!-- Información de usuario -->
-
-            <ImageView
-                android:id="@+id/img1"
-                android:layout_width="366dp"
-                android:layout_height="0dp"
-                android:background="@mipmap/ic_launcher_foreground_img"
-                android:scaleType="centerCrop"
-                app:layout_constraintBottom_toBottomOf="@+id/userInfo"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/appTitle"
-                app:layout_constraintWidth_percent="0.3" />
-
-            <TextView
-                android:id="@+id/userInfo"
-                android:layout_width="0dp"
-                android:layout_height="303dp"
-                android:layout_marginTop="16dp"
-                android:text="Name:\nEdad:\nGénero:\nUbicación: Colombia"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/appTitle" />
-
-            <!-- Descripción -->
-            <TextView
-                android:id="@+id/descLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Descripción"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/userInfo" />
-
-            <EditText
-                android:id="@+id/descEdit"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:background="@android:drawable/editbox_background"
-                android:gravity="top"
-                android:hint="Escribe algo sobre ti..."
-                android:inputType="textMultiLine"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/descLabel" />
-
-            <TextView
-                android:id="@+id/genderLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="¿Qué género buscas?"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/descEdit" />
-
-            <TextView
-                android:id="@+id/relationLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                android:text="¿Qué tipo de relación buscas?"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/genderLabel" />
-
-            <TextView
-                android:id="@+id/personalidadLabel2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Personalidad"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/relationLabel" />
-
-            <TextView
-                android:id="@+id/tv_how_i_perceive_world3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Cómo percibo el mundo"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/personalidadLabel2" />
-
-            <LinearLayout
+            <!-- Spacer to push carousel down -->
+            <View
+                android:id="@+id/spacer"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
+                android:layout_height="32dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <!-- Galería de imágenes -->
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/image_pager"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@drawable/rounded_background"
+                android:clipToPadding="false"
+                android:maxHeight="550dp"
+                android:padding="4dp"
+                app:layout_constraintDimensionRatio="3:3"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_how_i_perceive_world3">
+                app:layout_constraintTop_toBottomOf="@id/spacer"
+                app:layout_constraintWidth_percent="1.0" />
 
-                <TextView
-                    android:id="@+id/tv_observer"
-                    android:layout_width="68dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/circle_background"
-                    android:padding="8dp"
-                    android:text="Observador" />
-
-                <TextView
-                    android:id="@+id/tv_analytic"
-                    android:layout_width="68dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/circle_background"
-                    android:padding="8dp"
-                    android:text="Analítico" />
-
-                <TextView
-                    android:id="@+id/tv_versatile"
-                    android:layout_width="68dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/circle_background"
-                    android:padding="8dp"
-                    android:text="Versátil" />
-
-                <TextView
-                    android:id="@+id/tv_proud"
-                    android:layout_width="68dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/circle_background"
-                    android:padding="8dp"
-                    android:text="Orgulloso" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/textView"
+            <me.relex.circleindicator.CircleIndicator3
+                android:id="@+id/image_indicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="TextView"
-                app:layout_constraintBottom_toBottomOf="@+id/genderLabel"
-                app:layout_constraintStart_toEndOf="@+id/genderLabel"
-                app:layout_constraintTop_toTopOf="@+id/genderLabel" />
+                android:layout_marginTop="12dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/image_pager" />
 
-            <TextView
-                android:id="@+id/textView2"
-                android:layout_width="wrap_content"
+            <!-- Información del perfil -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/profile_info_card"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="80dp"
-                android:text="TextView"
-                app:layout_constraintBottom_toBottomOf="@+id/relationLabel"
-                app:layout_constraintStart_toEndOf="@+id/genderLabel"
-                app:layout_constraintTop_toTopOf="@+id/relationLabel" />
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/image_indicator">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Nombre -->
+                    <TextView
+                        android:id="@+id/name_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nombre"
+                        android:textColor="#212121"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <!-- Edad -->
+                    <TextView
+                        android:id="@+id/age_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Edad: N/D"
+                        android:textColor="#616161"
+                        android:textSize="16sp" />
+
+                    <!-- Género -->
+                    <TextView
+                        android:id="@+id/gender_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Género: ?"
+                        android:textColor="#616161"
+                        android:textSize="16sp" />
+
+                    <!-- Distancia -->
+                    <TextView
+                        android:id="@+id/location_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Ubicación: N/D"
+                        android:textColor="#616161"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Intereses coincidentes -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/interests_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/profile_info_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/interests_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Intereses en común"
+                        android:textColor="#212121"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:id="@+id/interests_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="vertical"
+                        android:padding="4dp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Descripción (si está disponible) -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/description_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/interests_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/desc_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Descripción"
+                        android:textColor="#212121"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/desc_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text=""
+                        android:textColor="#616161"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
-
-    <!-- Menú inferior fijo -->
-    <!-- Aquí puedes agregar tu menú inferior si es necesario -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -64,7 +64,7 @@ object LocationEncryptionHelper {
         return Base64.encodeToString(combined, Base64.DEFAULT)
     }
 
-    fun decryptLocation(encryptedData: String): Pair<Double, Double> {
+    fun decryptLocation(encryptedData: String): Pair<Double, Double>? {
         try {
             if (!isKeyValid()) {
                 // La clave ya no existe → no se puede desencriptar
@@ -91,7 +91,7 @@ object LocationEncryptionHelper {
             return Pair(lat, lon)
         } catch (e: Exception) {
             e.printStackTrace()
-            return Pair(0.0, 0.0) // Devolver coordenadas inválidas para indicar fallo
+            return null // Devolver coordenadas inválidas para indicar fallo
         }
     }
 
@@ -99,15 +99,19 @@ object LocationEncryptionHelper {
     fun hasLocationChangedSignificantly(
         oldEncryptedLocation: String,
         newLat: Double,
-        newLon: Double
+        newLon: Double,
+        thresholdMeters: Float = 100f
     ): Boolean {
-        val (oldLat, oldLon) = decryptLocation(oldEncryptedLocation)
-        // Evita comparar con 0.0 si la desencriptación falló
-        if (oldLat == 0.0 && oldLon == 0.0) return true
+        if (newLat !in -90.0..90.0 || newLon !in -180.0..180.0) {
+            return true // Consider invalid coordinates as a significant change
+        }
+
+        val decrypted = decryptLocation(oldEncryptedLocation) ?: return true
+        val (oldLat, oldLon) = decrypted
 
         val results = FloatArray(1)
         Location.distanceBetween(oldLat, oldLon, newLat, newLon, results)
-        return results[0] > 100
+        return results[0] > thresholdMeters
     }
 
     fun isKeyValid(): Boolean {
