@@ -1,13 +1,16 @@
 package com.example.frikidates
 
+import android.os.Parcelable
 import com.google.firebase.firestore.PropertyName
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 data class Profile(
-    val profileId: String,  // <-- Agrega este campo
+    val id: String,
     val name: String,
-    val age: Int,
+    val birthdate: String,
     @PropertyName("genero")val gender: String,
-    val city: String,
-    val compatibility: String,
+    val encryptedLocation: String,
+    val interests: List<String>,
     val images: List<String>
-)
+): Parcelable
