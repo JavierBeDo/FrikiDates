@@ -78,7 +78,8 @@ object FirebaseRepository {
         birthdate: String,
         gender: String,
         genderPref: String,
-        ageRange: String,
+        ageRangeMin: Int,
+        ageRangeMax: Int,
         desc: String,
         distanciaMax: Int = 50
     ): Task<Void> {
@@ -91,7 +92,8 @@ object FirebaseRepository {
             "birthdate" to birthdate,
             "genero" to gender,
             "preferenciaGenero" to genderPref,
-            "rangoEdadBuscado" to ageRange,
+            "rangoEdadMin" to ageRangeMin,
+            "rangoEdadMax" to ageRangeMax,
             "distanciaMax" to distanciaMax,
             "bio" to desc,
             "imgUrl" to "",
@@ -951,5 +953,21 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
             .addOnFailureListener { e -> onFailure(e) }
     }
 
+    fun saveUserEdad(
+        userId: String,
+        ageMin: Int,
+        ageMax: Int,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection("users").document(userId)
+            .set(mapOf(
+                "age_min" to ageMin,
+                "age_max" to ageMax
+                // Añade otros campos según sea necesario
+            ))
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
 
 }

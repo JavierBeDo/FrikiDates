@@ -8,6 +8,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.frikidates.firebase.FirebaseRepository
 import java.util.Calendar
+import com.google.android.material.slider.RangeSlider
 
 class LoginActivity : AppCompatActivity() {
 
@@ -24,7 +25,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var etPasswordRegister: EditText
     private lateinit var spinnerGender: Spinner
     private lateinit var spinnerGenderPref: Spinner
-    private lateinit var seekBarAgeRange: SeekBar
+    private lateinit var ageRangeBar: RangeSlider
     private lateinit var seekBarDistancia: SeekBar
     private lateinit var tvAgeRangeMin: TextView
     private lateinit var tvAgeRangeMax: TextView
@@ -61,7 +62,7 @@ class LoginActivity : AppCompatActivity() {
         etPasswordRegister = findViewById(R.id.et_register_password)
         spinnerGender = findViewById(R.id.spinner3)
         spinnerGenderPref = findViewById(R.id.spinner4)
-        seekBarAgeRange = findViewById(R.id.age_range_slider)
+        ageRangeBar = findViewById(R.id.age_range_slider)
         tvAgeRangeMin = findViewById(R.id.tv_edadmin)
         tvAgeRangeMax = findViewById(R.id.tv_edadmax)
         seekBarDistancia = findViewById(R.id.seekBarDistancia)
@@ -73,7 +74,7 @@ class LoginActivity : AppCompatActivity() {
 
         //Perdí la contraseña
         tvForgotPassword = findViewById(R.id.tv_forgot_password)
-
+        setupAgeRangeBar()
         setupUI()
     }
 
@@ -150,7 +151,8 @@ class LoginActivity : AppCompatActivity() {
             val password = etPasswordRegister.text.toString()
             val gender = spinnerGender.selectedItem.toString()
             val genderPref = spinnerGenderPref.selectedItem.toString()
-            val ageRange = "${tvAgeRangeMin.text}-99+"
+            val ageRangeMin = ageRangeBar.values[0].toInt() // Obtener valor del RangeSlider
+            val ageRangeMax = ageRangeBar.values[1].toInt()
             val birthdate = birthdateDisplay.text.toString()
             val desc = descEdit.text.toString()
             val age = calculateAge(birthdate)
@@ -168,7 +170,7 @@ class LoginActivity : AppCompatActivity() {
                     val uid = authResult.user?.uid ?: return@addOnSuccessListener
 
                     FirebaseRepository.createUserProfile(
-                        uid, name, surname, email, birthdate, gender, genderPref, ageRange, desc
+                        uid, name, surname, email, birthdate, gender, genderPref, ageRangeMin, ageRangeMax , desc
                     )
                         .addOnSuccessListener {
                             showToast(getString(R.string.user_registered_successfully))
@@ -191,23 +193,10 @@ class LoginActivity : AppCompatActivity() {
         tvGoToLogin.setOnClickListener { viewSwitcher.showPrevious() }
 
         // Spinners
-        val genderOptions = arrayOf("Masculino", "Femenino", "Otro")
+        val genderOptions = arrayOf("Hombre", "Mujer", "No-binario")
         val genderPrefOptions = arrayOf("Masculino", "Femenino", "Cualquiera")
         spinnerGender.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderOptions)
         spinnerGenderPref.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderPrefOptions)
-
-        // SeekBars
-        seekBarAgeRange.max = 81
-        seekBarAgeRange.progress = 0
-        tvAgeRangeMin.text = "18"
-        tvAgeRangeMax.text = "99+"
-        seekBarAgeRange.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvAgeRangeMin.text = (18 + progress).toString()
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
 
         seekBarDistancia.max = 195
         seekBarDistancia.progress = 0
@@ -263,5 +252,19 @@ class LoginActivity : AppCompatActivity() {
         val user = User(userId)
         val userPreferences = UserPreferences(this)
         userPreferences.saveUser(user)
+    }
+
+    private fun setupAgeRangeBar() {
+        // Establecer valores iniciales
+        ageRangeBar.values = listOf(18f, 99f)
+        // Actualizar TextViews con valores iniciales
+        tvAgeRangeMin.text = "Edad mínima: ${ageRangeBar.values[0].toInt()}"
+        tvAgeRangeMax.text = "Edad máxima: ${ageRangeBar.values[1].toInt()}"
+        // Listener para cambios en el rango
+        ageRangeBar.addOnChangeListener { slider, _, _ ->
+            val values = slider.values
+            tvAgeRangeMin.text = "Edad mínima: ${values[0].toInt()}"
+            tvAgeRangeMax.text = "Edad máxima: ${values[1].toInt()}"
+        }
     }
 }
