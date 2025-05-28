@@ -30,13 +30,13 @@ class ImagePagerAdapter(
             val imageUrl = imageUrls[position]
             Glide.with(context)
                 .load(imageUrl)
-                .placeholder(R.drawable.placeholder_image) // Opcional: crea este drawable
+                .placeholder(R.drawable.landscapeplaceholder) // Opcional: crea este drawable
                 .error(R.drawable.error_image)         // Opcional: crea este drawable
                 .into(holder.imageView)
         } else {
             // Si la lista está vacía, podrías mostrar un placeholder por defecto
             Glide.with(context)
-                .load(R.drawable.placeholder_image) // Carga un placeholder general
+                .load(R.drawable.landscapeplaceholder) // Carga un placeholder general
                 .into(holder.imageView)
         }
     }

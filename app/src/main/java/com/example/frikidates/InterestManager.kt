@@ -16,10 +16,15 @@ class InterestManager(
     val selectedTags = mutableSetOf<String>()
     private val maxSelection = 10
 
-    fun loadAndDisplayInterests(onLoaded: (() -> Unit)? = null, onError: ((Exception) -> Unit)? = null) {
+    fun loadAndDisplayInterests(
+        onLoaded: (() -> Unit)? = null,
+        onError: ((Exception) -> Unit)? = null
+    ) {
         FirebaseRepository.fetchUserInterests(
-            onComplete = { userInterests ->
-                selectedTags.addAll(userInterests)
+            onSuccess = { userInterests ->
+                selectedTags.clear()
+                selectedTags.addAll(userInterests) // <-- Aquí se cargan los intereses del usuario
+
                 FirebaseRepository.fetchAllInterests(
                     onSuccess = { groups ->
                         container.removeAllViews()
@@ -34,6 +39,7 @@ class InterestManager(
             onError = { e -> onError?.invoke(e) }
         )
     }
+
 
     private fun addGroupToLayout(groupName: String, names: List<String>) {
         val formattedGroupName = groupName

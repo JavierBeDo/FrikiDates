@@ -24,10 +24,8 @@ class UserPreferences(context: Context) {
         }
     }
 
-    fun clearUser() {
-        with(sharedPreferences.edit()) {
-            clear()
-            apply()
-        }
+    fun clear() {
+        sharedPreferences.edit().clear().apply()
     }
+
 }

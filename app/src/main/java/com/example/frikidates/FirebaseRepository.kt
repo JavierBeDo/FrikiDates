@@ -17,13 +17,17 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.ListResult
 import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.UUID
 
 object FirebaseRepository {
@@ -104,16 +108,26 @@ object FirebaseRepository {
             .continueWithTask { saveUserDocument(uid, userData) }
     }
 
-    fun loginAndLoadProfile(email: String, password: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+    fun loginAndLoadProfile(
+        email: String,
+        password: String,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
         loginUser(email, password)
             .addOnSuccessListener { authResult ->
-                val uid = authResult.user?.uid ?: return@addOnSuccessListener
+                val uid = authResult.user?.uid
+                if (uid == null) {
+                    onError(appContext.getString(R.string.error_generic))
+                    return@addOnSuccessListener
+                }
 
-                getUserDocument(uid)
+                db.collection("user").document(uid).get()
                     .addOnSuccessListener { userDoc ->
                         val profileId = userDoc.getString("profileId")
-                        if (profileId != null) {
-                            getProfileDocument(profileId)
+
+                        if (!profileId.isNullOrEmpty()) {
+                            db.collection("profiles").document(profileId).get()
                                 .addOnSuccessListener { profileDoc ->
                                     if (profileDoc.exists()) {
                                         onSuccess(uid)
@@ -125,7 +139,7 @@ object FirebaseRepository {
                                     onError(appContext.getString(R.string.error_obtaining_profile, e.message ?: ""))
                                 }
                         } else {
-                            onError("No se encontró el ID del perfil")
+                            onError(appContext.getString(R.string.error_obtaining_profile))
                         }
                     }
                     .addOnFailureListener { e ->
@@ -136,6 +150,7 @@ object FirebaseRepository {
                 onError(appContext.getString(R.string.error_generic, e.message ?: ""))
             }
     }
+
 
     fun getFirstProfileImageUrl(userId: String, onSuccess: (Uri) -> Unit, onFailure: () -> Unit) {
         val folderName = userId.removePrefix("profile_")
@@ -206,11 +221,11 @@ object FirebaseRepository {
     }
 
     fun saveImageUrl(
-        context: Context,
         userId: String,
         imageUrl: String,
         onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
+        onFailure: (Exception) -> Unit,
+        context: Context
     ) {
         val imageData = hashMapOf("imageUrl" to imageUrl)
         FirebaseFirestore.getInstance().collection("users")
@@ -385,63 +400,65 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
             }
             .addOnFailureListener { onFailure() }
     }
+    fun sendTextMessage(
+        matchId: String,
+        senderId: String,
+        texto: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val mensaje = MensajeEnviar(
+            senderId = senderId,
+            text = texto,
+            timestamp = FieldValue.serverTimestamp(),
+            type = "texto" // tipo literal, no se toma de strings.xml
+        )
 
-fun sendTextMessage(
-    context: Context,
-    matchId: String,
-    senderId: String,
-    texto: String,
-    onSuccess: () -> Unit,
-    onFailure: (Exception) -> Unit
-) {
-    val matchesCollection = context.getString(R.string.collection_matches)
-    val messagesCollection = context.getString(R.string.collection_messages)
-    val messagePrefix = context.getString(R.string.message_doc_prefix)
-    val messageTypeText = context.getString(R.string.message_type_text)
-    val fieldSenderId = context.getString(R.string.field_sender_id)
-    val fieldText = context.getString(R.string.field_text)
-    val fieldType = context.getString(R.string.field_type)
-
-    val mensaje = MensajeEnviar(
-        senderId = senderId,
-        text = texto,
-        timestamp = com.google.firebase.firestore.FieldValue.serverTimestamp(),
-        type = messageTypeText
-    )
-
-    db.collection(matchesCollection)
-        .document(matchId)
-        .collection(messagesCollection)
-        .document("$messagePrefix${System.currentTimeMillis()}")
-        .set(mensaje)
-        .addOnSuccessListener { onSuccess() }
-        .addOnFailureListener { e -> onFailure(e) }
-}
+        FirebaseFirestore.getInstance()
+            .collection("matches") // usa el nombre real de la colección en Firestore
+            .document(matchId)
+            .collection("messages") // subcolección donde están los mensajes
+            .document("mensaje_${System.currentTimeMillis()}") // ID único basado en timestamp
+            .set(mensaje)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
 
 
-fun listenMessages(
+    fun listenMessages(
         matchId: String,
         onNewMessage: (MensajeRecibir) -> Unit,
+        onMessageUpdated: (MensajeRecibir) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        db.collection("matches").document(matchId)
+        val db = FirebaseFirestore.getInstance()
+        db.collection("matches")
+            .document(matchId)
             .collection("messages")
-            .orderBy("timestamp")
-            .addSnapshotListener { snaps, error ->
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     onError(error)
                     return@addSnapshotListener
                 }
-                if (snaps != null) {
-                    for (dc in snaps.documentChanges) {
-                        if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
-                            val msg = dc.document.toObject(MensajeRecibir::class.java)
-                            onNewMessage(msg)
+                if (snapshots != null) {
+                    for (dc in snapshots.documentChanges) {
+                        val mensaje = dc.document.toObject(MensajeRecibir::class.java)
+                        mensaje.id = dc.document.id
+                        when (dc.type) {
+                            DocumentChange.Type.ADDED -> {
+                                onNewMessage(mensaje)
+                            }
+                            DocumentChange.Type.MODIFIED -> {
+                                onMessageUpdated(mensaje)
+                            }
+                            else -> { /* No necesitas manejar REMOVED aquí */ }
                         }
                     }
                 }
             }
     }
+
 
     fun fetchChatsForUser(
         currentUserId: String,
@@ -510,7 +527,7 @@ fun listenMessages(
     }
 
     fun fetchUserInterests(
-        onComplete: (Set<String>) -> Unit,
+        onSuccess: (List<String>) -> Unit,
         onError: (Exception) -> Unit
     ) {
         val uid = auth.currentUser?.uid
@@ -524,10 +541,13 @@ fun listenMessages(
             .get()
             .addOnSuccessListener { document ->
                 val interests = document.get("interests") as? List<String> ?: emptyList()
-                onComplete(interests.map { it.replace("_", " ") }.toSet())
+                onSuccess(interests.map { it.replace("_", " ") }.toSet().toList())
             }
-            .addOnFailureListener { e -> onError(e) }
+            .addOnFailureListener { exception ->
+                onError(exception)
+            }
     }
+
 
     fun fetchAllInterests(
         onSuccess: (Map<String, List<String>>) -> Unit,
@@ -774,7 +794,10 @@ fun listenMessages(
 
 
     fun uploadUriToFirebaseStorage(userId: String, imageUri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
-        val storageRef = storage.reference.child("$userId/${UUID.randomUUID()}.jpg")
+        // Generar un prefijo con timestamp en formato YYYYMMDD_HHMMSS
+        val timestamp_ = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val fileName = "$timestamp_${UUID.randomUUID()}.jpg"
+        val storageRef = storage.reference.child("$userId/$fileName")
         storageRef.putFile(imageUri)
             .addOnSuccessListener { taskSnapshot ->
                 taskSnapshot.storage.downloadUrl.addOnSuccessListener { downloadUri ->
@@ -787,7 +810,10 @@ fun listenMessages(
     }
 
     fun uploadBitmapToFirebaseStorage(userId: String, bitmap: Bitmap, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
-        val storageRef = storage.reference.child("$userId/${UUID.randomUUID()}.jpg")
+        // Generar un prefijo con timestamp en formato YYYYMMDD_HHMMSS
+        val timestamp_ = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val fileName = "$timestamp_${UUID.randomUUID()}.jpg"
+        val storageRef = storage.reference.child("$userId/$fileName")
         val baos = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 75, baos)
         val data = baos.toByteArray()
@@ -801,7 +827,6 @@ fun listenMessages(
                 onFailure(exception)
             }
     }
-
     fun saveImageUrlToFirestore(userId: String, imageUrl: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
         val imageData = hashMapOf("imageUrl" to imageUrl)
         db.collection("users").document(userId)
@@ -814,7 +839,9 @@ fun listenMessages(
         val storageRef = storage.reference.child("$userId/")
         storageRef.listAll().addOnSuccessListener { listResult ->
             val imageUris = mutableListOf<Uri>()
-            val tasks = listResult.items.map { item ->
+            // Ordenar los elementos por nombre (que incluye el timestamp)
+            val sortedItems = listResult.items.sortedBy { it.name }
+            val tasks = sortedItems.map { item ->
                 item.downloadUrl
             }
             Tasks.whenAllSuccess<Uri>(tasks)
@@ -902,5 +929,27 @@ fun listenMessages(
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }
+
+    fun countUserImages(userId: String, onSuccess: (Int) -> Unit, onFailure: (Exception) -> Unit) {
+        val storageRef = storage.reference.child("$userId/")
+        storageRef.listAll()
+            .addOnSuccessListener { result ->
+                onSuccess(result.items.size)
+            }
+            .addOnFailureListener { e ->
+                onFailure(e)
+            }
+    }
+
+    fun resetPassword(
+        email: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ){
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
 
 }

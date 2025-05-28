@@ -3,6 +3,7 @@ package com.example.frikidates
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.frikidates.firebase.FirebaseRepository
@@ -32,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvGoToLogin: TextView
     private lateinit var birthdateDisplay: TextView
     private lateinit var descEdit: EditText
+    private lateinit var tvForgotPassword: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +61,7 @@ class LoginActivity : AppCompatActivity() {
         etPasswordRegister = findViewById(R.id.et_register_password)
         spinnerGender = findViewById(R.id.spinner3)
         spinnerGenderPref = findViewById(R.id.spinner4)
-        seekBarAgeRange = findViewById(R.id.seekBar)
+        seekBarAgeRange = findViewById(R.id.age_range_slider)
         tvAgeRangeMin = findViewById(R.id.tv_edadmin)
         tvAgeRangeMax = findViewById(R.id.tv_edadmax)
         seekBarDistancia = findViewById(R.id.seekBarDistancia)
@@ -68,6 +70,9 @@ class LoginActivity : AppCompatActivity() {
         tvGoToLogin = findViewById(R.id.tv_go_to_login)
         birthdateDisplay = findViewById(R.id.birthdate_display)
         descEdit = findViewById(R.id.descEdit2)
+
+        //Perdí la contraseña
+        tvForgotPassword = findViewById(R.id.tv_forgot_password)
 
         setupUI()
     }
@@ -109,6 +114,34 @@ class LoginActivity : AppCompatActivity() {
 
         }
 
+        tvForgotPassword.setOnClickListener {
+            val email = etEmail.text.toString().trim()
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Por favor, introduce tu correo electrónico", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(this, "Por favor, introduce un correo válido", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            FirebaseRepository.resetPassword(
+                email,
+                onSuccess = {
+                    Toast.makeText(this, "Correo de recuperación enviado. Revisa tu bandeja de entrada.", Toast.LENGTH_LONG).show()
+                },
+                onFailure = { e ->
+                    val errorMessage = when (e.message) {
+                        "There is no user record corresponding to this identifier. The user may have been deleted." ->
+                            "No existe una cuenta con este correo."
+                        else -> "Error al enviar el correo: ${e.message}"
+                    }
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+                }
+            )
+
+        }
+
         // Register button
         btnRegister.setOnClickListener {
             val name = etName.text.toString()
@@ -130,7 +163,6 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-
             FirebaseRepository.registerUser(email, password)
                 .addOnSuccessListener { authResult ->
                     val uid = authResult.user?.uid ?: return@addOnSuccessListener
@@ -151,6 +183,8 @@ class LoginActivity : AppCompatActivity() {
                     showToast(getString(R.string.registration_error, e.message))
                 }
         }
+
+
 
         // Switcher actions
         tvGoToRegister.setOnClickListener { viewSwitcher.showNext() }

@@ -73,6 +73,13 @@
         <activity
             android:name=".LoginInterestsActivity"
             android:exported="true">
+            <intent-filter>º
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".FullScreenImageActivity"
+            android:exported="true">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>

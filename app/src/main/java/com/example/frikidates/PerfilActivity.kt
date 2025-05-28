@@ -20,6 +20,7 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -27,12 +28,18 @@ import com.bumptech.glide.Glide
 import com.example.frikidates.firebase.FirebaseRepository
 import com.example.frikidates.utils.InterestManager
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
 
 class PerfilActivity : AppCompatActivity() {
-
 
     private lateinit var interestManager: InterestManager
     private lateinit var imageView1: ImageView
@@ -48,15 +55,13 @@ class PerfilActivity : AppCompatActivity() {
     private lateinit var notificationCheckBox: CheckBox
     private var user: User? = null
 
-
     private val REQUEST_CODE_GALLERY = 1001
     private val REQUEST_CODE_CAMERA = 1002
     private val REQUEST_CODE_STORAGE_PERMISSION = 1003
 
-    private var selectedImageView: ImageView? = null // Variable para rastrear qué ImageView se seleccionó
+    private var selectedImageView: ImageView? = null
 
     private lateinit var userPreferences: UserPreferences
-
 
     private val userId: String
         get() = user?.userId ?: ""
@@ -66,19 +71,16 @@ class PerfilActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_perfil)
 
+        val logoutTextView = findViewById<TextView>(R.id.tv_logout)
+        logoutTextView.setOnClickListener {
+            showLogoutConfirmation()
+        }
 
         val layout = findViewById<LinearLayout>(R.id.ll_interest_vertical)
         interestManager = InterestManager(this, layout)
 
         userPreferences = UserPreferences(this)
 
-        //esto carga el nav
-        BottomNavManager.setupNavigation(this) {
-            updateDescriptionInDatabase(userId, descEdit.text.toString())
-        }
-
-
-        // Ahora puedes usar userPreferences para obtener el usuario
         user = userPreferences.getUser()
 
         imageView1 = findViewById(R.id.img1)
@@ -93,6 +95,21 @@ class PerfilActivity : AppCompatActivity() {
         genderSpinner2 = findViewById(R.id.genderSpinner2)
         notificationCheckBox = findViewById(R.id.notificationCheckBox)
 
+        // Setup navigation with interest saving
+        BottomNavManager.setupNavigation(this) {
+            // Save description
+            updateDescriptionInDatabase(userId, descEdit.text.toString())
+            // Save interests before navigating
+            FirebaseRepository.saveUserInterests(
+                interests = interestManager.selectedTags.toList(),
+                onSuccess = {
+                    Toast.makeText(this, getString(R.string.interests_saved), Toast.LENGTH_SHORT).show()
+                },
+                onFailure = {
+                    Toast.makeText(this, getString(R.string.error_saving), Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
 
         loadUserImages()
         loadUserInfo()
@@ -102,25 +119,86 @@ class PerfilActivity : AppCompatActivity() {
         interestManager = InterestManager(this, findViewById(R.id.ll_interest_vertical))
         interestManager.loadAndDisplayInterests()
 
-
         notificationCheckBox.setOnCheckedChangeListener { _, isChecked ->
             updateNotificationSettingsInDatabase(isChecked)
         }
 
-        // Acción para abrir la galería
         val imageViews = listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
+
         for (imageView in imageViews) {
-            imageView.setOnClickListener {
-                selectedImageView = imageView // Guardar la referencia del ImageView seleccionado
-                requestStoragePermission()
-                openGallery()
+            imageView.setOnClickListener(object : View.OnClickListener {
+                private var lastClickTime = 0L
+                private val DOUBLE_CLICK_TIME_DELTA = 300L
+                private var clickCount = 0
+
+                override fun onClick(v: View?) {
+                    val imageViewClicked = v as? ImageView ?: return
+                    val clickTime = System.currentTimeMillis()
+
+                    clickCount++
+
+                    if (clickCount == 1) {
+                        lastClickTime = clickTime
+                        GlobalScope.launch(Dispatchers.Main) {
+                            delay(DOUBLE_CLICK_TIME_DELTA)
+                            if (clickCount == 1) {
+                                if (imageViewClicked.tag != null || imageViews.count { it.tag != null } < 6) {
+                                    selectedImageView = imageViewClicked
+                                    requestStoragePermission()
+                                    openGallery()
+                                } else {
+                                    Toast.makeText(this@PerfilActivity, "Máximo 6 imágenes. Reemplaza una existente.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            clickCount = 0
+                        }
+                    } else if (clickCount == 2 && clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA) {
+                        val drawable = imageViewClicked.drawable
+                        if (drawable != null) {
+                            showDeleteConfirmation(imageViewClicked)
+                        }
+                        clickCount = 0
+                    }
+                }
+            })
+
+            // Añadir OnLongClickListener para abrir imagen a pantalla completa
+            imageView.setOnLongClickListener {
+                if (imageView.tag != null) {
+                    val imageUrl = imageView.tag.toString()
+                    val intent = Intent(this, FullScreenImageActivity::class.java).apply {
+                        putExtra(FullScreenImageActivity.EXTRA_IMAGE_URL, imageUrl)
+                    }
+                    startActivity(intent)
+                    true
+                } else {
+                    false
+                }
             }
         }
 
-        // Acción para abrir la cámara
         iv_camera.setOnClickListener {
-            requestStoragePermission()
-            openCamera()
+            val imageViews = listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
+            // Verificar el número de imágenes en Firebase
+            FirebaseRepository.countUserImages(userId,
+                onSuccess = { imageCount ->
+                    if (imageCount >= 6) {
+                        Toast.makeText(this, "Elimina una foto para poder abrir la cámara", Toast.LENGTH_SHORT).show()
+                    } else {
+                        selectedImageView = imageViews.firstOrNull { it.tag == null }
+                        if (selectedImageView != null) {
+                            requestStoragePermission()
+                            openCamera()
+                        } else {
+                            Toast.makeText(this, "Máximo 6 imágenes. Reemplaza una existente.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                onFailure = { e ->
+                    Log.e("Firebase", "Error al contar imágenes: ${e.message}")
+                    Toast.makeText(this, "Error al verificar imágenes", Toast.LENGTH_SHORT).show()
+                }
+            )
         }
     }
 
@@ -140,14 +218,12 @@ class PerfilActivity : AppCompatActivity() {
             when (requestCode) {
                 REQUEST_CODE_GALLERY -> {
                     data?.data?.let { selectedImage ->
-                        selectedImageView?.setImageURI(selectedImage) // Usar el ImageView seleccionado
                         uploadImageToFirebaseStorage(selectedImage)
                     }
                 }
                 REQUEST_CODE_CAMERA -> {
                     data?.extras?.get("data")?.let { imageBitmap ->
                         val bitmap = imageBitmap as Bitmap
-                        selectedImageView?.setImageBitmap(bitmap) // Usar el ImageView seleccionado
                         uploadImageToFirebaseStorage(bitmap)
                     }
                 }
@@ -162,111 +238,109 @@ class PerfilActivity : AppCompatActivity() {
     }
 
     private fun uploadImageToFirebaseStorage(image: Any) {
-        when (image) {
-            is Bitmap -> {
-                // Subir imagen capturada con la cámara
-                uploadBitmapToFirebaseStorage(image)
-            }
-            is Uri -> {
-                // Subir imagen seleccionada de la galería
-                uploadUriToFirebaseStorage(image)
+        selectedImageView?.let { imageView ->
+            Glide.with(this).load(R.drawable.loading_animation).into(imageView)
+
+            if (imageView.tag != null) {
+                val imageUrl = imageView.tag.toString()
+                val decodedUrl = URLDecoder.decode(imageUrl, StandardCharsets.UTF_8.toString())
+                val fileName = decodedUrl.substringAfterLast("/").substringBefore("?")
+                if (fileName.isNotEmpty()) {
+                    val storageRef = FirebaseStorage.getInstance().reference.child("$userId/$fileName")
+                    storageRef.delete()
+                        .addOnSuccessListener {
+                            Log.d("DeleteImage", "Imagen anterior eliminada con éxito")
+                            proceedWithUpload(image, imageView)
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("DeleteImage", "Error al eliminar imagen anterior: ${exception.message}")
+                            Toast.makeText(this, "Error al reemplazar la imagen", Toast.LENGTH_SHORT).show()
+                            imageView.setImageResource(R.drawable.landscapeplaceholder)
+                        }
+                } else {
+                    Log.e("DeleteImage", "fileName is empty, cannot delete")
+                    proceedWithUpload(image, imageView)
+                }
+            } else {
+                proceedWithUpload(image, imageView)
             }
         }
     }
 
-    private fun uploadUriToFirebaseStorage(imageUri: Uri) {
-        FirebaseRepository.uploadUriToFirebaseStorage(
-            userId,
-            imageUri,
-            onSuccess = { imageUrl ->
-                val successMessage = "Image URL saved successfully: $imageUrl"
-                FirebaseRepository.saveImageUrlToFirestore(
+    private fun proceedWithUpload(image: Any, imageView: ImageView) {
+        when (image) {
+            is Bitmap -> {
+                FirebaseRepository.uploadBitmapToFirebaseStorage(
                     userId,
-                    imageUrl,
-                    onSuccess = {
-                        Log.d("Firestore", successMessage)
-                        // Opcional: Toast.makeText(this, successMessage, Toast.LENGTH_SHORT).show()
+                    image,
+                    onSuccess = { imageUrl ->
+                        Log.d("Firebase", "Imagen subida con éxito: $imageUrl")
+                        imageView.tag = imageUrl
+                        loadUserImages()
                     },
-                    onFailure = { e ->
-                        val errorMessage = "Error saving image URL: ${e.message}"
-                        Log.e("Firestore", errorMessage)
-                        // Opcional: Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+                    onFailure = { exception ->
+                        Log.e("Upload", "Error al subir la imagen: ${exception.message}")
+                        Toast.makeText(this, "Error al subir la imagen", Toast.LENGTH_SHORT).show()
+                        imageView.setImageResource(R.drawable.landscapeplaceholder)
                     }
                 )
-            },
-            onFailure = { exception ->
-                val uploadError = "Error uploading image: ${exception.message}"
-                Log.e("Upload", uploadError)
-                // Opcional: Toast.makeText(this, uploadError, Toast.LENGTH_SHORT).show()
             }
-        )
-    }
-
-    private fun uploadBitmapToFirebaseStorage(bitmap: Bitmap) {
-        FirebaseRepository.uploadBitmapToFirebaseStorage(
-            userId,
-            bitmap,
-            onSuccess = { imageUrl ->
-                saveImageUrlToFirestore(
+            is Uri -> {
+                FirebaseRepository.uploadUriToFirebaseStorage(
                     userId,
-                    imageUrl,
-                    onSuccess = {
-                        val successMessage = getString(R.string.upload_success, imageUrl)
-                        Log.d("Firestore", successMessage)
+                    image,
+                    onSuccess = { imageUrl ->
+                        Log.d("Firebase", "Imagen subida con éxito: $imageUrl")
+                        imageView.tag = imageUrl
+                        loadUserImages()
                     },
-                    onFailure = { e ->
-                        val errorMessage = getString(R.string.save_error, e.message)
-                        Log.e("Firestore", errorMessage)
+                    onFailure = { exception ->
+                        Log.e("Upload", "Error al subir la imagen: ${exception.message}")
+                        Toast.makeText(this, "Error al subir la imagen", Toast.LENGTH_SHORT).show()
+                        imageView.setImageResource(R.drawable.landscapeplaceholder)
                     }
                 )
-            },
-            onFailure = { exception ->
-                val uploadError = getString(R.string.upload_error, exception.message)
-                Log.e("Upload", uploadError)
             }
-        )
-    }
-
-    private fun saveImageUrlToFirestore(
-        userId: String,
-        imageUrl: String,
-        onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
-    ) {
-        val savingMessage = getString(R.string.saving_image, userId, imageUrl)
-        Log.d("Firestore", savingMessage)
-        FirebaseRepository.saveImageUrlToFirestore(userId, imageUrl, onSuccess, onFailure)
+        }
     }
 
     private fun loadUserImages() {
+        val imageViews = listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
+        imageViews.forEach {
+            it.setImageResource(R.drawable.landscapeplaceholder)
+            it.tag = null
+        }
+
         FirebaseRepository.loadUserImages(
             userId,
             onSuccess = { imageUris ->
-                val imageViews = listOf(imageView1, imageView2, imageView3, imageView4, imageView5, imageView6)
                 for ((index, uri) in imageUris.withIndex()) {
                     if (index < imageViews.size) {
                         loadImageIntoImageView(uri, imageViews[index])
                     }
                 }
-                val loadSuccessMessage = getString(R.string.load_images_success, imageUris.size)
-                Log.d("Firebase", loadSuccessMessage)
+                for (index in imageUris.size until imageViews.size) {
+                    imageViews[index].setImageResource(R.drawable.landscapeplaceholder)
+                    imageViews[index].tag = null
+                }
+                Log.d("Firebase", "Cargadas ${imageUris.size} imágenes")
             },
             onFailure = { e ->
-                val errorMessage = getString(R.string.load_images_error, e.message)
-                Log.e("Firebase", errorMessage)
-                Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+                Log.e("Firebase", "Error al cargar imágenes: ${e.message}")
+                Toast.makeText(this, "Error al cargar imágenes", Toast.LENGTH_SHORT).show()
+                imageViews.forEach { it.setImageResource(R.drawable.landscapeplaceholder) }
             }
         )
     }
 
-
-
-
-    private fun loadImageIntoImageView(imageUri: Uri, imageView: ImageView) {
-        // Usar Glide o Picasso para cargar la imagen en el ImageView
-        Glide.with(this)
-            .load(imageUri)
+    fun loadImageIntoImageView(uri: Uri, imageView: ImageView) {
+        Glide.with(imageView.context)
+            .load(uri)
+            .placeholder(R.drawable.loading_animation)
+            .error(R.drawable.landscapeplaceholder)
             .into(imageView)
+
+        imageView.tag = uri.toString()
     }
 
     private fun loadUserInfo() {
@@ -294,7 +368,6 @@ class PerfilActivity : AppCompatActivity() {
             }
         )
     }
-
 
     private fun updateDescriptionInDatabase(userId: String, description: String) {
         FirebaseRepository.updateDescription(userId, description,
@@ -332,8 +405,13 @@ class PerfilActivity : AppCompatActivity() {
                     }
                 )
 
+                var isSpinnerInitial = true
                 spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                     override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                        if (isSpinnerInitial) {
+                            isSpinnerInitial = false
+                            return
+                        }
                         val selectedGender = genders[position]
                         FirebaseRepository.updateGender(
                             userId,
@@ -351,7 +429,6 @@ class PerfilActivity : AppCompatActivity() {
                     }
 
                     override fun onNothingSelected(parent: AdapterView<*>) {
-                        // Nada
                     }
                 }
             },
@@ -361,8 +438,6 @@ class PerfilActivity : AppCompatActivity() {
             }
         )
     }
-
-
 
     private fun loadNotificationSettings() {
         FirebaseRepository.loadNotificationSettings(
@@ -377,8 +452,7 @@ class PerfilActivity : AppCompatActivity() {
         )
     }
 
-
-
+    @SuppressLint("StringFormatMatches")
     private fun updateNotificationSettingsInDatabase(enabled: Boolean) {
         FirebaseRepository.updateNotificationSettings(
             userId,
@@ -389,16 +463,82 @@ class PerfilActivity : AppCompatActivity() {
             },
             onFailure = { e ->
                 val errorMessage = getString(R.string.error_updating_notifications, e.message)
-                Log.e("PerfilActivity", errorMessage, e)
+                Log.e("Firestore", errorMessage, e)
             }
         )
     }
 
     fun calcularEdad(fechaNacimiento: String): Int {
-            val formatter = DateTimeFormatter.ofPattern("d/M/yyyy")
-            val fechaNacimiento = LocalDate.parse(fechaNacimiento, formatter)
-            val hoy = LocalDate.now()
-            return Period.between(fechaNacimiento, hoy).years
-        }
+        val formatter = DateTimeFormatter.ofPattern("d/M/yyyy")
+        val fechaNacimiento = LocalDate.parse(fechaNacimiento, formatter)
+        val hoy = LocalDate.now()
+        return Period.between(fechaNacimiento, hoy).years
+    }
 
+    private fun showLogoutConfirmation() {
+        AlertDialog.Builder(this)
+            .setTitle("Cerrar sesión")
+            .setMessage("¿Estás seguro de que quieres cerrar sesión?")
+            .setPositiveButton("Sí") { _, _ ->
+                performLogout()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun performLogout() {
+        userPreferences.clear()
+        FirebaseAuth.getInstance().signOut()
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
+
+    private fun deleteImage(imageView: ImageView) {
+        imageView.tag?.let { tag ->
+            val imageUrl = tag.toString()
+            Log.d("DeleteImage", "imageUrl: $imageUrl")
+
+            val decodedUrl = URLDecoder.decode(imageUrl, StandardCharsets.UTF_8.toString())
+            Log.d("DeleteImage", "decodedUrl: $decodedUrl")
+
+            val fileName = decodedUrl.substringAfterLast("/").substringBefore("?")
+            Log.d("DeleteImage", "fileName: $fileName")
+
+            if (fileName.isEmpty()) {
+                Log.e("DeleteImage", "fileName is empty, cannot proceed")
+                return
+            }
+
+            Glide.with(this).load(R.drawable.loading_animation).into(imageView)
+
+            val storageRef = FirebaseStorage.getInstance().reference.child("$userId/$fileName")
+            storageRef.delete()
+                .addOnSuccessListener {
+                    Log.d("DeleteImage", "Imagen eliminada con éxito de Firebase Storage")
+                    Toast.makeText(this, "Imagen eliminada", Toast.LENGTH_SHORT).show()
+                    loadUserImages()
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("DeleteImage", "Error al eliminar la imagen: ${exception.message}", exception)
+                    Toast.makeText(this, "Error al eliminar la imagen", Toast.LENGTH_SHORT).show()
+                    imageView.setImageResource(R.drawable.landscapeplaceholder)
+                }
+        } ?: run {
+            Log.e("DeleteImage", "ImageView tag is null")
+            imageView.setImageResource(R.drawable.landscapeplaceholder)
+        }
+    }
+
+    private fun showDeleteConfirmation(imageView: ImageView) {
+        AlertDialog.Builder(this)
+            .setTitle("Eliminar imagen")
+            .setMessage("¿Quieres eliminar esta imagen?")
+            .setPositiveButton("Eliminar") { _, _ ->
+                deleteImage(imageView)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
 }
