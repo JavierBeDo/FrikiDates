@@ -12,11 +12,12 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.ViewSwitcher
+import android.util.Patterns
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.frikidates.firebase.FirebaseRepository
 import java.util.Calendar
-
+import com.google.android.material.slider.RangeSlider
 
 class LoginActivity : AppCompatActivity() {
 
@@ -28,25 +29,24 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvResendVerification: TextView
     private lateinit var mAuth: FirebaseAuth
 
+
     // Registro
     private lateinit var etName: EditText
     private lateinit var etSurname: EditText
-    private lateinit var etEmail_registrer: EditText
-    private lateinit var etPassword_registrer: EditText
+    private lateinit var etEmailRegister: EditText
+    private lateinit var etPasswordRegister: EditText
     private lateinit var spinnerGender: Spinner
     private lateinit var spinnerGenderPref: Spinner
-    private lateinit var seekBarAgeRange: SeekBar
-
+    private lateinit var ageRangeBar: RangeSlider
     private lateinit var seekBarDistancia: SeekBar
-    private lateinit var tvDistRangeMin: TextView
     private lateinit var tvAgeRangeMin: TextView
     private lateinit var tvAgeRangeMax: TextView
-
+    private lateinit var tvDistRangeMin: TextView
     private lateinit var btnRegister: Button
     private lateinit var tvGoToLogin: TextView
     private lateinit var birthdateDisplay: TextView
-    private lateinit var descEdit2 : EditText
-
+    private lateinit var descEdit: EditText
+    private lateinit var tvForgotPassword: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,16 +55,12 @@ class LoginActivity : AppCompatActivity() {
         val user = userPreferences.getUser()
 
         if (user != null) {
-            // Redirigir a la actividad principal
             startActivity(Intent(this, MainMenuActivity::class.java))
             finish()
             return
         } else {
             setContentView(R.layout.activity_login)
         }
-
-        val db = FirebaseFirestore.getInstance()
-
 
         viewSwitcher = findViewById(R.id.viewSwitcher)
         etEmail = findViewById(R.id.et_login_email)
@@ -75,28 +71,36 @@ class LoginActivity : AppCompatActivity() {
 
         mAuth = FirebaseAuth.getInstance()
 
-        // -------- REGISTRO --------
         etName = findViewById(R.id.et_register_name)
         etSurname = findViewById(R.id.et_register_surname)
-        etEmail_registrer = findViewById(R.id.et_register_email)
-        etPassword_registrer = findViewById(R.id.et_register_password)
+        etEmailRegister = findViewById(R.id.et_register_email)
+        etPasswordRegister = findViewById(R.id.et_register_password)
         spinnerGender = findViewById(R.id.spinner3)
         spinnerGenderPref = findViewById(R.id.spinner4)
-        seekBarAgeRange = findViewById(R.id.seekBar)
+        ageRangeBar = findViewById(R.id.age_range_slider)
         tvAgeRangeMin = findViewById(R.id.tv_edadmin)
-        tvDistRangeMin = findViewById(R.id.tvDistRangeMin)
         tvAgeRangeMax = findViewById(R.id.tv_edadmax)
+        seekBarDistancia = findViewById(R.id.seekBarDistancia)
+        tvDistRangeMin = findViewById(R.id.tvDistRangeMin)
         btnRegister = findViewById(R.id.btn_register)
         tvGoToLogin = findViewById(R.id.tv_go_to_login)
         birthdateDisplay = findViewById(R.id.birthdate_display)
-        descEdit2 = findViewById(R.id.descEdit2)
+        descEdit = findViewById(R.id.descEdit2)
 
+        //Perdí la contraseña
+        tvForgotPassword = findViewById(R.id.tv_forgot_password)
+        setupAgeRangeBar()
+        setupUI()
+    }
+
+    private fun setupUI() {
+        // Login button
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString()
             val password = etPassword.text.toString()
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
+                showToast(getString(R.string.fill_all_fields))
                 return@setOnClickListener
             }
 
@@ -163,33 +167,83 @@ class LoginActivity : AppCompatActivity() {
         tvGoToRegister.setOnClickListener {
             viewSwitcher.showNext()
         }
+            btnLogin.setOnClickListener {
+                val email = etEmail.text.toString()
+                val password = etPassword.text.toString()
 
-        // Acción para volver a la vista de login
-        tvGoToLogin.setOnClickListener {
-            viewSwitcher.showPrevious()
+                if (email.isEmpty() || password.isEmpty()) {
+                    showToast(getString(R.string.fill_all_fields))
+                    return@setOnClickListener
+                }
+
+                FirebaseRepository.loginAndLoadProfile(
+                    email,
+                    password,
+                    onSuccess = { uid ->
+                        showToast(getString(R.string.login_successful))
+                        saveUserToPreferences(uid)
+                        startActivity(Intent(this, MainMenuActivity::class.java))
+                        finish()
+                    },
+                    onError = { message ->
+                        showToast(message)
+                    }
+                )
+            }
+
         }
 
+        tvForgotPassword.setOnClickListener {
+            val email = etEmail.text.toString().trim()
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Por favor, introduce tu correo electrónico", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(this, "Por favor, introduce un correo válido", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            FirebaseRepository.resetPassword(
+                email,
+                onSuccess = {
+                    Toast.makeText(this, "Correo de recuperación enviado. Revisa tu bandeja de entrada.", Toast.LENGTH_LONG).show()
+                },
+                onFailure = { e ->
+                    val errorMessage = when (e.message) {
+                        "There is no user record corresponding to this identifier. The user may have been deleted." ->
+                            "No existe una cuenta con este correo."
+                        else -> "Error al enviar el correo: ${e.message}"
+                    }
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+                }
+            )
+
+        }
+
+        // Register button
         btnRegister.setOnClickListener {
             val name = etName.text.toString()
             val surname = etSurname.text.toString()
-            val email = etEmail_registrer.text.toString()
-            val password = etPassword_registrer.text.toString()
+            val email = etEmailRegister.text.toString()
+            val password = etPasswordRegister.text.toString()
             val gender = spinnerGender.selectedItem.toString()
             val genderPref = spinnerGenderPref.selectedItem.toString()
-            val ageRange = "${tvAgeRangeMin.text}-99+"
+            val ageRangeMin = ageRangeBar.values[0].toInt() // Obtener valor del RangeSlider
+            val ageRangeMax = ageRangeBar.values[1].toInt()
             val birthdate = birthdateDisplay.text.toString()
-            val desc = descEdit2.text.toString()
+            val desc = descEdit.text.toString()
             val age = calculateAge(birthdate)
 
             if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty()
                 || gender.isEmpty() || genderPref.isEmpty() || desc.isEmpty()
                 || birthdate == "Selecciona tu fecha de nacimiento" || age == -1
             ) {
-                Toast.makeText(this, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
+                showToast(getString(R.string.fill_all_fields))
                 return@setOnClickListener
             }
 
-            mAuth.createUserWithEmailAndPassword(email, password)
+            FirebaseRepository.registerUser(email, password)
                 .addOnSuccessListener { authResult ->
                     val user = authResult.user ?: return@addOnSuccessListener
                     val uid = user.uid
@@ -229,75 +283,60 @@ class LoginActivity : AppCompatActivity() {
                                             Toast.makeText(this, "Registro exitoso. Revisa tu correo", Toast.LENGTH_LONG).show()
                                         }
                                 }
+                    val uid = authResult.user?.uid ?: return@addOnSuccessListener
+
+                    FirebaseRepository.createUserProfile(
+                        uid, name, surname, email, birthdate, gender, genderPref, ageRangeMin, ageRangeMax , desc
+                    )
+                        .addOnSuccessListener {
+                            showToast(getString(R.string.user_registered_successfully))
+                            saveUserToPreferences(uid)
+                            startActivity(Intent(this, LoginInterestsActivity::class.java))
+                        }
+                        .addOnFailureListener { e ->
+                            showToast(getString(R.string.error_saving_data, e.message))
                         }
                         .addOnFailureListener {
                             Toast.makeText(this, "No se pudo enviar el correo de verificación", Toast.LENGTH_LONG).show()
                         }
                 }
                 .addOnFailureListener { e ->
-                    Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                    showToast(getString(R.string.registration_error, e.message))
                 }
         }
 
 
 
-        // Configurar los Spinners
-        val genderOptions = arrayOf("Masculino", "Femenino", "Otro")
+
+        // Switcher actions
+        tvGoToRegister.setOnClickListener { viewSwitcher.showNext() }
+        tvGoToLogin.setOnClickListener { viewSwitcher.showPrevious() }
+
+        // Spinners
+        val genderOptions = arrayOf("Hombre", "Mujer", "No-binario")
+
         val genderPrefOptions = arrayOf("Masculino", "Femenino", "Cualquiera")
         spinnerGender.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderOptions)
         spinnerGenderPref.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderPrefOptions)
 
-        // Configurar el SeekBar de rango de edad
-        seekBarAgeRange.max = 81 // Porque 99 - 18 = 81 posibles valores
-        seekBarAgeRange.progress = 0
-        tvAgeRangeMin.text = "18"
-        tvAgeRangeMax.text = "99+"
-
-        seekBarAgeRange.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val minAge = 18 + progress
-                tvAgeRangeMin.text = minAge.toString()
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-
-
-
-        // Acción para mostrar el DatePickerDialog
-        birthdateDisplay.setOnClickListener { showDatePickerDialog() }
-
-        seekBarDistancia = findViewById(R.id.seekBarDistancia)
-        tvDistRangeMin = findViewById(R.id.tvDistRangeMin)
-
-        seekBarDistancia.max = 195 // 200 - 5
+        seekBarDistancia.max = 195
         seekBarDistancia.progress = 0
         tvDistRangeMin.text = "5 km"
-
         seekBarDistancia.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val distancia = 5 + progress
-                tvDistRangeMin.text = "$distancia km"
-            }
+                tvDistRangeMin.text = getString(R.string.km_unit, 5 + progress)
 
+            }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
+        // Date picker
+        birthdateDisplay.setOnClickListener { showDatePickerDialog() }
     }
 
-    private fun showDatePickerDialog() {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-
-        DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
-            // Formato de la fecha
-            val date = "$selectedDay/${selectedMonth + 1}/$selectedYear"
-            birthdateDisplay.text = date
-        }, year, month, day).show()
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun calculateAge(birthdate: String): Int {
@@ -318,10 +357,35 @@ class LoginActivity : AppCompatActivity() {
         return age
     }
 
+    private fun showDatePickerDialog() {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+        DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+            val date = "$selectedDay/${selectedMonth + 1}/$selectedYear"
+            birthdateDisplay.text = date
+        }, year, month, day).show()
+    }
 
     private fun saveUserToPreferences(userId: String) {
         val user = User(userId)
         val userPreferences = UserPreferences(this)
         userPreferences.saveUser(user)
+    }
+
+    private fun setupAgeRangeBar() {
+        // Establecer valores iniciales
+        ageRangeBar.values = listOf(18f, 99f)
+        // Actualizar TextViews con valores iniciales
+        tvAgeRangeMin.text = "Edad mínima: ${ageRangeBar.values[0].toInt()}"
+        tvAgeRangeMax.text = "Edad máxima: ${ageRangeBar.values[1].toInt()}"
+        // Listener para cambios en el rango
+        ageRangeBar.addOnChangeListener { slider, _, _ ->
+            val values = slider.values
+            tvAgeRangeMin.text = "Edad mínima: ${values[0].toInt()}"
+            tvAgeRangeMax.text = "Edad máxima: ${values[1].toInt()}"
+        }
     }
 }

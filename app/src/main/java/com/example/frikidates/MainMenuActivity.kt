@@ -16,10 +16,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.frikidates.util.LocationEncryptionHelper
 import com.google.android.gms.location.LocationServices
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.example.frikidates.firebase.FirebaseRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.yuyakaido.android.cardstackview.CardStackLayoutManager
 import com.yuyakaido.android.cardstackview.CardStackListener
 import com.yuyakaido.android.cardstackview.CardStackView
@@ -29,8 +30,6 @@ import com.yuyakaido.android.cardstackview.SwipeAnimationSetting
 
 class MainMenuActivity : AppCompatActivity() {
 
-    private lateinit var nav_profile: ImageView
-    private lateinit var nav_chat: ImageView
     private lateinit var cardStackView: CardStackView
     private lateinit var manager: CardStackLayoutManager
     private lateinit var btnLike: ImageView
@@ -43,15 +42,17 @@ class MainMenuActivity : AppCompatActivity() {
     private var currentUserLatitude: Double = 0.0
     private var currentUserLongitude: Double = 0.0
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)
 
-        nav_profile = findViewById(R.id.nav_profile)
-        nav_chat = findViewById(R.id.nav_chat)
+
         btnLike = findViewById(R.id.btn_like)
         btnDislike = findViewById(R.id.btn_dislike)
         btnRewind = findViewById(R.id.btn_rewind)
+
+        // CardStack
         cardStackView = findViewById(R.id.card_stack_view)
 
         manager = CardStackLayoutManager(this, object : CardStackListener {
@@ -72,15 +73,7 @@ class MainMenuActivity : AppCompatActivity() {
         })
         cardStackView.layoutManager = manager
 
-        nav_chat.setOnClickListener {
-            startActivity(Intent(this, ChatsActivity::class.java))
-            finish()
-        }
-
-        nav_profile.setOnClickListener {
-            startActivity(Intent(this, PerfilActivity::class.java))
-            finish()
-        }
+        BottomNavManager.setupNavigation(this)
 
         btnLike.setOnClickListener {
             val setting = SwipeAnimationSetting.Builder()
@@ -149,57 +142,26 @@ class MainMenuActivity : AppCompatActivity() {
     }
 
     private fun loadProfilesFromFirestore() {
-        val db = FirebaseFirestore.getInstance()
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val currentUserEmail = currentUser?.email
+        val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
+        FirebaseRepository.loadProfiles(
+            currentUserEmail,
+            onSuccess = { profiles ->
+                cardStackView.adapter = CardStackAdapter(profiles, this)
 
-        if (currentUser == null) {
-            Log.w("Firestore", "Usuario no logueado")
-            cardStackView.adapter = CardStackAdapter(this, emptyList(), currentUserInterests, 0.0, 0.0)
-            return
-        }
-
-        db.collection("profiles")
-            .get()
-            .addOnSuccessListener { result ->
-                profilesList.clear()
-                if (result.isEmpty) {
-                    Log.d("Firestore", "No se encontraron perfiles")
-                    cardStackView.adapter = CardStackAdapter(this, emptyList(), currentUserInterests, currentUserLatitude, currentUserLongitude)
-                    return@addOnSuccessListener
-                }
-
-                val profilesToProcess = result.documents.filter { it.getString("email") != currentUserEmail }
-                if (profilesToProcess.isEmpty()) {
-                    Log.d("Firestore", "No hay otros perfiles")
-                    cardStackView.adapter = CardStackAdapter(this, emptyList(), currentUserInterests, currentUserLatitude, currentUserLongitude)
-                    return@addOnSuccessListener
-                }
-
-                var processedCount = 0
-                for (document in profilesToProcess) {
-                    val profileDocumentId = document.id
-                    val data = document.data ?: continue
-
-                    val email = data["email"] as? String ?: continue
-                    if (email == currentUserEmail) continue
-
-                    val name = data["name"] as? String ?: ""
-                    val birthdate = data["birthdate"] as? String ?: ""
-                    val gender = data["genero"] as? String ?: "Desconocido"
-                    val encryptedLocation = data["encryptedLocation"] as? String ?: ""
-                    val interests = (data["interests"] as? List<*>)?.filterIsInstance<String>()?.filterNotNull() ?: emptyList()
-
-                    loadAllProfileImages(profileDocumentId) { imageUrls ->
-                        if (!isFinishing) {
-                            val profile = Profile(
-                                id = profileDocumentId,
-                                name = name,
-                                birthdate = birthdate,
-                                gender = gender,
-                                encryptedLocation = encryptedLocation,
-                                interests = interests,
-                                images = imageUrls.filterNotNull()
+                profiles.forEach { profile ->
+                    FirebaseRepository.loadImageUrlsFromStorageMain(
+                        profile.profileId,
+                        onSuccess = { urls ->
+                            Log.d(
+                                "MainMenuActivity",
+                                getString(R.string.images_loaded_for, profile.name, urls.toString())
+                            )
+                        },
+                        onFailure = { exception ->
+                            Log.e(
+                                "MainMenuActivity",
+                                getString(R.string.error_loading_images_for, profile.name),
+                                exception
                             )
                             profilesList.add(profile)
                             processedCount++
@@ -214,8 +176,12 @@ class MainMenuActivity : AppCompatActivity() {
                                 Log.d("Firestore", "Adapter updated with ${profilesList.size} profiles")
                             }
                         }
-                    }
+                    )
                 }
+            },
+            onError = {
+                cardStackView.adapter = CardStackAdapter(emptyList(), this)
+                Log.e("MainMenuActivity", getString(R.string.error_loading_profiles), it)
             }
             .addOnFailureListener { e ->
                 Log.e("Firestore", "Error al cargar perfiles", e)

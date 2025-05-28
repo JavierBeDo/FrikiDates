@@ -1,5 +1,6 @@
 package com.example.frikidates
 
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
@@ -7,7 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.frikidates.firebase.FirebaseRepository
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -47,29 +48,26 @@ class AdapterMensajes(private val c: Context, private val myUserId: String) : Re
 
         // Mostrar nombre y foto solo si es de otro usuario
         if (senderId != myUserId) {
-            FirebaseFirestore.getInstance().collection("profiles")
-                .document("profile_"+ senderId)
-                .get()
-                .addOnSuccessListener { doc ->
-                    val nombre = doc.getString("name") ?: "Desconocido"
-                    val fotoUrl = doc.getString("fotoPerfil") ?: ""
-
+            FirebaseRepository.getProfileData(
+                senderId,
+                onSuccess = { nombre, fotoUrl ->
                     cacheUsuarios[senderId] = Pair(nombre, fotoUrl)
-
-                   // holder.nombre.text = nombre
+                    // holder.nombre.text = nombre
                     if (fotoUrl.isNotEmpty()) {
                         // Glide.with(c).load(fotoUrl).into(holder.fotoMensajePerfil)
                     } else {
                         // holder.fotoMensajePerfil.setImageResource(R.mipmap.ic_launcher)
                     }
+                },
+                onFailure = { e ->
+                    Log.e("AdapterMensajes", c.getString(R.string.error_obteniendo_datos_usuario, e.message))
                 }
-                .addOnFailureListener {
-                    Log.e("AdapterMensajes", "Error obteniendo datos de usuario: ${it.message}")
-                }
+            )
         }
 
+
         // Mostrar texto o imagen
-        if (mensaje.type == "image") {
+        if (mensaje.type == c.getString(R.string.mensaje_tipo_imagen)) {
             holder.fotoMensaje.visibility = View.VISIBLE
             holder.mensaje.visibility = View.GONE
             Glide.with(c).load(mensaje.text).into(holder.fotoMensaje)
@@ -80,10 +78,35 @@ class AdapterMensajes(private val c: Context, private val myUserId: String) : Re
         }
 
         // Mostrar hora
-        val timestamp = mensaje.timestamp?.time ?: 0L
-        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        holder.hora.text = sdf.format(Date(timestamp))
+        val timestamp = mensaje.timestamp
+        if (timestamp != null) {
+            val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+            holder.hora.text = sdf.format(timestamp.toDate())
+        } else {
+            // Timestamp aún pendiente (no recibido)
+            holder.hora.text = "Enviando..."  // O muestra "..." o "Enviando..."
+        }
+        //val timestamp2 = mensaje.timestamp?.time ?: 0L
+        //val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        //holder.hora.text = sdf.format(Date(timestamp))
     }
 
     override fun getItemCount(): Int = listMensaje.size
+
+
+    fun updateMensaje(updatedMensaje: MensajeRecibir) {
+        val index = listMensaje.indexOfFirst { it.id == updatedMensaje.id }
+        if (index != -1) {
+            listMensaje[index] = updatedMensaje
+            notifyItemChanged(index)
+            // Forzar scroll después de actualizar el mensaje
+            (c as? Activity)?.runOnUiThread {
+                (c as Activity).runOnUiThread {
+                    // Aquí suponiendo que tienes acceso al RecyclerView, si no, usa un callback
+                    // o maneja desde la Activity la actualización con scroll
+                }
+            }
+        }
+    }
+
 }

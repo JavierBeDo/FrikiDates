@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp">
+    android:layout_margin="10dp"
+    android:background="@drawable/rounded_background_personality"
+    android:padding="6dp">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cd_chats"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
         cardview:cardCornerRadius="10dp"
-        cardview:cardElevation="4dp">
+        cardview:cardElevation="4dp"
+        cardview:layout_constraintBottom_toBottomOf="parent"
+        cardview:layout_constraintEnd_toEndOf="parent"
+        cardview:layout_constraintStart_toStartOf="parent"
+        cardview:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -45,6 +50,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Kevin"
+                        android:textColor="#040404"
                         android:textStyle="bold" />
 
                     <TextView
@@ -52,8 +58,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="12:30"
-                        android:textSize="12sp"
-                        android:textColor="#888888"/>
+                        android:textColor="#888888"
+                        android:textSize="12sp" />
                 </LinearLayout>
 
                 <TextView
@@ -61,7 +67,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Hola, bienvenido"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#77000000"
                     android:textSize="14sp"
                     android:visibility="visible" />
             </LinearLayout>

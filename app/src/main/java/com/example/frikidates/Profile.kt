@@ -14,4 +14,3 @@ data class Profile(
     val interests: List<String>,
     val images: List<String>
 ): Parcelable
-

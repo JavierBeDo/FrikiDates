@@ -4,96 +4,193 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Elige tus fotos de perfil"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <GridLayout
-        android:id="@+id/gridLayout"
+    <!-- ScrollView para hacer el contenido desplazable -->
+    <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginBottom="24dp"
-        android:columnCount="3"
-        android:rowCount="2"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/buttonUpload"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView">
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
-            android:id="@+id/imageView1"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="8dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/landscapeplaceholder" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="4dp">
 
-        <ImageView
-            android:id="@+id/imageView2"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="8dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/landscapeplaceholder" />
+            <!-- Título -->
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Elige tus fotos de perfil"
+                android:textColor="#432871"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/imageView3"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="8dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/landscapeplaceholder" />
+            <!-- Grid de imágenes -->
+            <GridLayout
+                android:id="@+id/gridLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/rounded_background"
+                android:columnCount="3"
+                android:gravity="center"
+                android:padding="12dp"
+                android:rowCount="2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/textView">
 
-        <ImageView
-            android:id="@+id/imageView4"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="8dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/landscapeplaceholder" />
+                <!-- Repetimos el estilo de FrameLayout para cada imagen -->
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5.5dp"
+                    android:background="@drawable/image_border"
+                    android:padding="2dp">
 
-        <ImageView
-            android:id="@+id/imageView5"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="8dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/landscapeplaceholder" />
+                    <ImageView
+                        android:id="@+id/imageView1"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/rounded_shape"
+                        android:clipToOutline="true"
+                        android:src="@drawable/landscapeplaceholder" />
 
-        <ImageView
-            android:id="@+id/imageView6"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="8dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/landscapeplaceholder" />
+                </FrameLayout>
 
-        <ImageView
-            android:id="@+id/iv_camera"
-            android:layout_width="64dp"
-            android:layout_height="38dp"
-            app:srcCompat="@drawable/camera" />
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5.5dp"
+                    android:background="@drawable/image_border"
+                    android:padding="2dp">
 
-    </GridLayout>
+                    <ImageView
+                        android:id="@+id/imageView2"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/rounded_shape"
+                        android:clipToOutline="true"
+                        android:src="@drawable/landscapeplaceholder" />
+                </FrameLayout>
 
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5.5dp"
+                    android:background="@drawable/image_border"
+                    android:padding="2dp">
+
+                    <ImageView
+                        android:id="@+id/imageView3"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/rounded_shape"
+                        android:clipToOutline="true"
+                        android:src="@drawable/landscapeplaceholder" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5.5dp"
+                    android:background="@drawable/image_border"
+                    android:padding="2dp">
+
+                    <ImageView
+                        android:id="@+id/imageView4"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/rounded_shape"
+                        android:clipToOutline="true"
+                        android:src="@drawable/landscapeplaceholder" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5.5dp"
+                    android:background="@drawable/image_border"
+                    android:padding="2dp">
+
+                    <ImageView
+                        android:id="@+id/imageView5"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/rounded_shape"
+                        android:clipToOutline="true"
+                        android:src="@drawable/landscapeplaceholder" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5.5dp"
+                    android:background="@drawable/image_border"
+                    android:padding="2dp">
+
+                    <ImageView
+                        android:id="@+id/imageView6"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/rounded_shape"
+                        android:clipToOutline="true"
+                        android:src="@drawable/landscapeplaceholder" />
+                </FrameLayout>
+
+                <!-- Botón de cámara -->
+                <FrameLayout
+                    android:layout_width="41dp"
+                    android:layout_height="41dp"
+                    android:layout_margin="5.5dp"
+                    android:background="@drawable/image_border">
+
+                    <ImageView
+                        android:id="@+id/iv_camera"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/rounded_shape"
+                        android:clipToOutline="true"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/camera" />
+                </FrameLayout>
+
+            </GridLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+    <!-- Botón de acción inferior -->
     <Button
         android:id="@+id/buttonUpload"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="24dp"
+        android:background="@drawable/rounded_background_personality"
+        android:backgroundTint="#00000000"
         android:text="Registrar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

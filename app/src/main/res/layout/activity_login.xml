@@ -28,7 +28,6 @@
         app:layout_constraintTop_toBottomOf="@+id/tw_title">
 
         <!-- Vista de Login -->
-
         <!-- Vista de Registro -->
 
         <LinearLayout
@@ -143,10 +142,13 @@
                     android:layout_height="wrap_content"
                     android:text="Rango de edad" />
 
-                <SeekBar
-                    android:id="@+id/seekBar"
+                <com.google.android.material.slider.RangeSlider
+                    android:id="@+id/age_range_slider"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:valueFrom="18"
+                    android:valueTo="99"
+                    android:stepSize="1.0" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -206,7 +208,11 @@
                 <SeekBar
                     android:id="@+id/seekBarDistancia"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:background="#00FFDADA"
+                    android:backgroundTint="#00000000"
+                    android:outlineAmbientShadowColor="#CA6565"
+                    android:outlineSpotShadowColor="#D56A6A" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -253,7 +259,6 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/descLabel" />
 
-
                 <Button
                     android:id="@+id/btn_register"
                     android:layout_width="match_parent"
@@ -272,16 +277,53 @@
             </LinearLayout>
         </ScrollView>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <EditText
+                android:id="@+id/et_login_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Correo electrónico"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/et_login_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Contraseña"
+                android:inputType="textPassword" />
+
+            <Button
+                android:id="@+id/btn_login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Iniciar sesión" />
+
+            <TextView
+                android:id="@+id/tv_forgot_password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="8dp"
+                android:text="He olvidado mi contraseña"
+                android:textColor="@android:color/holo_blue_dark" />
+
+            <TextView
+                android:id="@+id/tv_go_to_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="8dp"
+                android:text="¿No tienes cuenta? Créala"
+                android:textColor="@android:color/holo_blue_dark" />
+
+        </LinearLayout>
+
+        <!-- Vista de Registro -->
+
     </ViewSwitcher>
-
-<!--    <androidx.constraintlayout.helper.widget.Layer-->
-<!--        android:id="@+id/layer"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginEnd="2dp"-->
-<!--        app:constraint_referenced_ids="viewSwitcher"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        tools:layout_editor_absoluteY="66dp" />-->
-
 </androidx.constraintlayout.widget.ConstraintLayout>

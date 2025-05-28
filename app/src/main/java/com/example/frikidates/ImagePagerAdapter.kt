@@ -69,7 +69,6 @@ class ImagePagerAdapter(
                 .into(holder.imageView)
         }
     }
-
     override fun onViewRecycled(holder: ImageViewHolder) {
         super.onViewRecycled(holder)
         Glide.with(context).clear(holder.imageView)

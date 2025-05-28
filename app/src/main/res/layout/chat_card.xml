@@ -8,6 +8,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/rounded_background_personality"
         android:orientation="horizontal">
 
         <de.hdodenhof.circleimageview.CircleImageView
@@ -15,7 +16,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_margin="10dp"
-            android:src="@mipmap/ic_launcher" />
+            android:src="@drawable/default_avatar" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -32,10 +33,11 @@
 
                 <TextView
                     android:id="@+id/nombreMensaje"
-                    android:layout_width="0dp"
+                    android:layout_width="310dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Nombre" />
+                    android:text="Nombre"
+                    android:textColor="#000000" />
 
                 <TextView
                     android:id="@+id/horaMensaje"
@@ -49,7 +51,8 @@
                 android:id="@+id/mensajeMensaje"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Último mensaje..." />
+                android:text="Último mensaje..."
+                android:textColor="#84000000" />
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

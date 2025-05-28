@@ -1,3 +1,128 @@
 <resources>
     <string name="app_name">FrikiDates</string>
+
+    <!-- Placeholder para imagen por defecto -->
+    <string name="default_avatar_description">Avatar por defecto</string>
+
+    <string name="last_message_at">Último mensaje a las %1$s</string>
+    <string name="error_obteniendo_datos_usuario">Error obteniendo datos de usuario: %1$s</string>
+    <string name="mensaje_tipo_imagen">image</string>
+    <string name="tag_firestore">Firestore</string>
+    <string name="tag_upload">Upload</string>
+    <string name="error_loading_images">Error al cargar imágenes</string>
+    <string name="connection_status_changed">Estado conexión cambiado: %1$s</string>
+
+    <string name="age_with_value">Edad: %1$d</string>
+    <string name="age_not_available">Edad: N/D</string>
+
+    <string name="default_match_id">match_1</string>
+
+    <string name="error_getting_profile_or_status">Error al obtener perfil o estado: %1$s</string>
+    <string name="error_getting_matched_user_id">Error obteniendo matchedUserId: %1$s</string>
+    <string name="error_sending_message">Error enviando mensaje: %1$s</string>
+    <string name="error_listening_messages">Error escuchando mensajes: %1$s</string>
+
+    <string name="dialog_title_confirmation">Confirmación</string>
+    <string name="dialog_message_unmatch">¿Estás seguro de que deseas deshacer el match?</string>
+    <string name="dialog_message_report">¿Deseas denunciar a este usuario?</string>
+    <string name="dialog_positive_button">Sí</string>
+    <string name="dialog_negative_button">Cancelar</string>
+    <string name="select_photo">Selecciona una foto</string>
+    <string name="error_fetching_matches">Error al obtener matches: %1$s</string>
+
+    <!-- Logs y mensajes comunes en FirebaseRepository -->
+    <string name="log_firestore_image_saved">Image URL saved: %1$s</string>
+    <string name="log_firestore_image_save_error">Error saving image: %1$s</string>
+    <string name="log_upload_error">Error: %1$s</string>
+    <string name="error_obtaining_profile">Error al obtener perfil: %1$s</string>
+    <string name="error_obtaining_user">Error al obtener usuario: %1$s</string>
+    <string name="error_generic">Error: %1$s</string>
+    <string name="log_on_disconnect_configured">onDisconnect configurado para poner "inactive"</string>
+    <string name="log_error_configuring_on_disconnect">Error configurando onDisconnect: %1$s</string>
+    <string name="log_status_updated_active">Estado actualizado a "active"</string>
+    <string name="log_error_updating_status_active">Error actualizando estado a "active': %1$"s</string>
+    <string name="log_not_connected_rtdb">No conectado a RTDB</string>
+    <string name="error_matched_user_id_not_found">matchedUserId no encontrado</string>
+
+
+    <!-- Colecciones Firestore -->
+    <string name="collection_profiles">profiles</string>
+    <string name="collection_matches">matches</string>
+    <string name="collection_messages">messages</string>
+    <string name="collection_interests">interests</string>
+    <string name="collection_matches_in_profile">matches</string>
+
+    <!-- Campos Firestore -->
+    <string name="field_name">name</string>
+    <string name="field_status">status</string>
+    <string name="field_interests">interests</string>
+    <string name="field_last_message">lastMessage</string>
+    <string name="field_timestamp">timestamp</string>
+    <string name="field_matched_user_id">matchedUserId</string>
+    <string name="field_sender_id">senderId</string>
+    <string name="field_text">text</string>
+    <string name="field_type">type</string>
+
+    <!-- Prefijos -->
+    <string name="prefix_profile">profile_</string>
+    <string name="message_doc_prefix">mensaje_</string>
+    <!-- Tipos de mensaje -->
+    <string name="message_type_text">text</string>
+    <!-- Ruta Realtime Database -->
+    <string name="rtdb_user_status_path">user/%1$s/status</string>
+    <string name="max_interests_toast">Máximo %1$d intereses</string>
+    <string name="fill_all_fields">Por favor, complete todos los campos</string>
+    <string name="login_successful">Inicio de sesión exitoso</string>
+    <string name="user_registered_successfully">Usuario registrado correctamente</string>
+    <string name="error_saving_data">Error al guardar datos: %1$s</string>
+    <string name="registration_error">Error en el registro: %1$s</string>
+    <string name="select_birthdate">Selecciona tu fecha de nacimiento</string>
+    <string name="km_unit">%1$d km</string>
+
+    <string name="error_loading_interests">Error al cargar intereses</string>
+    <string name="select_at_least_10_interests">Selecciona al menos 10 gustos</string>
+    <string name="interests_saved">Intereses guardados</string>
+    <string name="error_saving">Error al guardar</string>
+
+    <string name="error_loading_profiles">Error al cargar perfiles</string>
+    <string name="images_loaded_for">Imágenes cargadas para %1$s: %2$s</string>
+    <string name="error_loading_images_for">Error cargando imágenes de %1$s</string>
+    <string name="user_info_template">Name: %1$s\nSurname: %2$s\nEdad: %3$s\nGénero: %4$s</string>
+
+    <string name="error_saving_image_url">Error saving image URL: %1$s</string>
+    <string name="image_url_saved_successfully">Image URL saved successfully: %1$s</string>
+    <string name="error_uploading_image">Error uploading image: %1$s</string>
+
+    <string name="error_loading_user_images">Error loading user images: %1$s</string>
+
+
+        <string name="upload_success">URL de imagen guardada exitosamente: %1$s</string>
+        <string name="upload_error">Error al subir la imagen: %1$s</string>
+        <string name="save_error">Error al guardar la URL de la imagen: %1$s</string>
+        <string name="saving_image">Guardando URL de imagen para usuario %1$s: %2$s</string>
+        <string name="load_images_success">Imágenes del usuario cargadas exitosamente: %1$d imágenes</string>
+        <string name="load_images_error">Error al cargar las imágenes del usuario: %1$s</string>
+
+
+    <!-- loadUserInfo -->
+    <string name="error_user_not_authenticated">Error: usuario no autenticado</string>
+    <string name="user_info_display">Nombre: %1$s\nApellido: %2$s\nEdad: %3$s\nGénero: %4$s</string>
+    <string name="error_getting_user_info">Error al obtener la información del usuario: %1$s</string>
+
+    <!-- updateDescriptionInDatabase -->
+    <string name="description_updated">Descripción actualizada correctamente</string>
+    <string name="error_updating_description">Error actualizando descripción: %1$s</string>
+
+    <!-- setupGenderSpinner -->
+    <string name="error_getting_field">Error al obtener %1$s: %2$s</string>
+    <string name="field_updated">Campo %1$s actualizado a %2$s</string>
+    <string name="error_updating_field">Error actualizando %1$s: %2$s</string>
+    <string name="error_loading_genders">Error al cargar lista de géneros: %1$s</string>
+
+    <!-- loadNotificationSettings -->
+    <string name="error_loading_notifications">Error al cargar configuración de notificaciones: %1$s</string>
+
+    <!-- updateNotificationSettingsInDatabase -->
+    <string name="notifications_updated">Configuración de notificaciones actualizada a %1$s</string>
+    <string name="error_updating_notifications">Error al actualizar configuración de notificaciones: %1$s</string>
 </resources>

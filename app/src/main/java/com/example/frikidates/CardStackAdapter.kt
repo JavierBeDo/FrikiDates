@@ -135,23 +135,30 @@ class CardStackAdapter(
 
         updateImageNavigationButtonsVisibility()
 
-        holder.pageChangeCallback?.let { holder.imagePager.unregisterOnPageChangeCallback(it) }
-        holder.pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
+        // Limpia el callback anterior si existe
+        holder.pageChangeCallback?.let {
+            holder.imagePager.unregisterOnPageChangeCallback(it)
+        }
+
+        val newCallback = object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(pagePosition: Int) {
                 updateImageNavigationButtonsVisibility()
             }
         }
-        holder.imagePager.registerOnPageChangeCallback(holder.pageChangeCallback!!)
+        holder.pageChangeCallback = newCallback
+        holder.imagePager.registerOnPageChangeCallback(newCallback)
 
         holder.buttonPreviousImage.setOnClickListener {
-            if (holder.imagePager.currentItem > 0) {
-                holder.imagePager.setCurrentItem(holder.imagePager.currentItem - 1, true)
+            val currentItem = holder.imagePager.currentItem
+            if (currentItem > 0) {
+                holder.imagePager.setCurrentItem(currentItem - 1, true)
             }
         }
         holder.buttonNextImage.setOnClickListener {
             val adapter = holder.imagePager.adapter
             if (adapter != null && holder.imagePager.currentItem < adapter.itemCount - 1) {
                 holder.imagePager.setCurrentItem(holder.imagePager.currentItem + 1, true)
+
             }
         }
     }
