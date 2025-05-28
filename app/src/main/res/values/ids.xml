@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="btn_more_info" type="id" />
+    <item name="tv_resend_mail" type="id">gg</item>
+    <item name="tvDistRangeMax" type="id" />
+</resources>

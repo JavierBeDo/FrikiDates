@@ -28,63 +28,15 @@
         app:layout_constraintTop_toBottomOf="@+id/tw_title">
 
         <!-- Vista de Login -->
-        <!-- Vista de Registro -->
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <EditText
-                android:id="@+id/et_login_email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Correo electrónico"
-                android:inputType="textEmailAddress" />
-
-            <EditText
-                android:id="@+id/et_login_password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Contraseña"
-                android:inputType="textPassword" />
-
-            <Button
-                android:id="@+id/btn_login"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Iniciar sesión" />
-
-            <TextView
-                android:id="@+id/tv_go_to_register"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:paddingTop="16dp"
-                android:text="¿No tienes cuenta? Créala"
-                android:textColor="@android:color/holo_blue_dark" />
-
-            <TextView
-                android:id="@+id/tv_resend_mail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:text="¿No te a llegado el correo de verificación? Reenviar"
-                android:textColor="@android:color/holo_blue_dark"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="10dp">
+                android:padding="16dp">
 
                 <EditText
                     android:id="@+id/et_register_name"
@@ -118,7 +70,7 @@
                     android:id="@+id/tv_gender"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Genero" />
+                    android:text="Género" />
 
                 <Spinner
                     android:id="@+id/spinner3"
@@ -129,7 +81,7 @@
                     android:id="@+id/tv_gender_find"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Genero a buscar" />
+                    android:text="Género a buscar" />
 
                 <Spinner
                     android:id="@+id/spinner4"
@@ -146,30 +98,29 @@
                     android:id="@+id/age_range_slider"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:stepSize="1.0"
                     android:valueFrom="18"
-                    android:valueTo="99"
-                    android:stepSize="1.0" />
+                    android:valueTo="99" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/tv_edadmin"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="18" />
+                        android:text="Edad mínima: 18" />
 
                     <TextView
                         android:id="@+id/tv_edadmax"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="right"
-                        android:foregroundGravity="right"
+                        android:layout_weight="1"
                         android:gravity="end"
-                        android:text="99+"
-                        android:textAlignment="viewEnd" />
+                        android:text="Edad máxima: 99+"
+                        android:textAlignment="gravity" />
 
                 </LinearLayout>
 
@@ -203,37 +154,33 @@
                     android:id="@+id/tv_distancia"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Distancia maxima" />
+                    android:text="Distancia máxima" />
 
                 <SeekBar
                     android:id="@+id/seekBarDistancia"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#00FFDADA"
-                    android:backgroundTint="#00000000"
-                    android:outlineAmbientShadowColor="#CA6565"
-                    android:outlineSpotShadowColor="#D56A6A" />
+                    android:layout_height="wrap_content" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/tvDistRangeMin"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="5km" />
+                        android:text="5 km" />
 
                     <TextView
                         android:id="@+id/tvDistRangeMax"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="right"
-                        android:foregroundGravity="right"
+                        android:layout_weight="1"
                         android:gravity="end"
-                        android:text="200km"
-                        android:textAlignment="viewEnd" />
+                        android:text="200 km"
+                        android:textAlignment="gravity" />
+
 
                 </LinearLayout>
 
@@ -243,9 +190,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Descripción"
-                    android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/img4" />
+                    android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/descEdit2"
@@ -254,10 +199,7 @@
                     android:background="@android:drawable/editbox_background"
                     android:gravity="top"
                     android:hint="Escribe algo sobre ti..."
-                    android:inputType="textMultiLine"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/descLabel" />
+                    android:inputType="textMultiLine" />
 
                 <Button
                     android:id="@+id/btn_register"
@@ -320,6 +262,16 @@
                 android:paddingTop="8dp"
                 android:text="¿No tienes cuenta? Créala"
                 android:textColor="@android:color/holo_blue_dark" />
+
+            <TextView
+                android:id="@+id/tv_resend_mail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="8dp"
+                android:text="¿No te ha llegado el correo de verificación? Reenviar"
+                android:textColor="@android:color/holo_blue_dark"
+                 />
 
         </LinearLayout>
 

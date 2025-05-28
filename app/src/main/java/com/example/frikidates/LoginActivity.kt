@@ -3,21 +3,14 @@ package com.example.frikidates
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.SeekBar
-import android.widget.Spinner
-import android.widget.TextView
-import android.widget.Toast
-import android.widget.ViewSwitcher
 import android.util.Patterns
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.frikidates.firebase.FirebaseRepository
-import java.util.Calendar
 import com.google.android.material.slider.RangeSlider
+import com.google.firebase.auth.FirebaseAuth
+import java.util.Calendar
 
 class LoginActivity : AppCompatActivity() {
 
@@ -27,8 +20,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var tvGoToRegister: TextView
     private lateinit var tvResendVerification: TextView
-    private lateinit var mAuth: FirebaseAuth
-
+    private lateinit var tvForgotPassword: TextView
 
     // Registro
     private lateinit var etName: EditText
@@ -46,10 +38,12 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvGoToLogin: TextView
     private lateinit var birthdateDisplay: TextView
     private lateinit var descEdit: EditText
-    private lateinit var tvForgotPassword: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize FirebaseRepository
+        FirebaseRepository.init(this)
 
         val userPreferences = UserPreferences(this)
         val user = userPreferences.getUser()
@@ -62,14 +56,14 @@ class LoginActivity : AppCompatActivity() {
             setContentView(R.layout.activity_login)
         }
 
+        // Initialize views
         viewSwitcher = findViewById(R.id.viewSwitcher)
-        etEmail = findViewById(R.id.et_login_email)
+        etEmail = findViewById(R.id.et_login_emai)
         etPassword = findViewById(R.id.et_login_password)
         btnLogin = findViewById(R.id.btn_login)
         tvGoToRegister = findViewById(R.id.tv_go_to_register)
         tvResendVerification = findViewById(R.id.tv_resend_mail)
-
-        mAuth = FirebaseAuth.getInstance()
+        tvForgotPassword = findViewById(R.id.tv_forgot_password)
 
         etName = findViewById(R.id.et_register_name)
         etSurname = findViewById(R.id.et_register_surname)
@@ -87,8 +81,6 @@ class LoginActivity : AppCompatActivity() {
         birthdateDisplay = findViewById(R.id.birthdate_display)
         descEdit = findViewById(R.id.descEdit2)
 
-        //Perdí la contraseña
-        tvForgotPassword = findViewById(R.id.tv_forgot_password)
         setupAgeRangeBar()
         setupUI()
     }
@@ -96,118 +88,59 @@ class LoginActivity : AppCompatActivity() {
     private fun setupUI() {
         // Login button
         btnLogin.setOnClickListener {
-            val email = etEmail.text.toString()
-            val password = etPassword.text.toString()
+            val email = etEmail.text.toString().trim()
+            val password = etPassword.text.toString().trim()
 
             if (email.isEmpty() || password.isEmpty()) {
                 showToast(getString(R.string.fill_all_fields))
                 return@setOnClickListener
             }
 
-            mAuth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener { authResult ->
-                    val user = authResult.user ?: return@addOnSuccessListener
-
-                    if (!user.isEmailVerified) {
-                        Toast.makeText(this, "Verifica tu correo antes de iniciar sesión", Toast.LENGTH_LONG).show()
-
-                        // Reenvío automático
-                        user.sendEmailVerification()
-                            .addOnSuccessListener {
-                                Toast.makeText(this, "Correo de verificación reenviado", Toast.LENGTH_SHORT).show()
+            FirebaseRepository.loginAndLoadProfile(
+                email,
+                password,
+                onSuccess = { uid ->
+                    if (FirebaseAuth.getInstance().currentUser?.isEmailVerified == false) {
+                        FirebaseAuth.getInstance().currentUser?.sendEmailVerification()
+                            ?.addOnSuccessListener {
+                                showToast("Correo de verificación enviado. Revisa tu bandeja.")
+                                tvResendVerification.visibility = View.VISIBLE
                             }
-                            .addOnFailureListener {
-                                Toast.makeText(this, "Error al reenviar el correo de verificación", Toast.LENGTH_SHORT).show()
+                            ?.addOnFailureListener {
+                                showToast("Error al enviar correo de verificación.")
                             }
-
-                        // Mostrar botón de reenvío manual
-                        tvResendVerification.visibility = View.VISIBLE
-
                         FirebaseAuth.getInstance().signOut()
-                        return@addOnSuccessListener
+                        showToast("Verifica tu correo antes de iniciar sesión.")
+                        return@loginAndLoadProfile
                     }
 
-                    val uid = user.uid
-                    val db = FirebaseFirestore.getInstance()
-
-                    db.collection("user").document(uid).get()
-                        .addOnSuccessListener { userDoc ->
-                            val profileId = userDoc.getString("profileId")
-
-                            if (profileId != null) {
-                                db.collection("profiles").document(profileId).get()
-                                    .addOnSuccessListener { profileDoc ->
-                                        if (profileDoc.exists()) {
-                                            Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
-                                            saveUserToPreferences(uid)
-                                            startActivity(Intent(this, LoginInterestsActivity::class.java))
-                                            finish()
-                                        } else {
-                                            Toast.makeText(this, "Perfil no encontrado", Toast.LENGTH_LONG).show()
-                                        }
-                                    }
-                                    .addOnFailureListener { e ->
-                                        Toast.makeText(this, "Error al obtener perfil: ${e.message}", Toast.LENGTH_LONG).show()
-                                    }
-                            } else {
-                                Toast.makeText(this, "No se encontró el ID del perfil", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Error al obtener usuario: ${e.message}", Toast.LENGTH_LONG).show()
-                        }
+                    showToast(getString(R.string.login_successful))
+                    saveUserToPreferences(uid)
+                    startActivity(Intent(this, LoginInterestsActivity::class.java))
+                    finish()
+                },
+                onError = { message ->
+                    showToast(message)
                 }
-                .addOnFailureListener { e ->
-                    Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-                }
+            )
         }
 
-
-        // Acción para cambiar a la vista de registro
-        tvGoToRegister.setOnClickListener {
-            viewSwitcher.showNext()
-        }
-            btnLogin.setOnClickListener {
-                val email = etEmail.text.toString()
-                val password = etPassword.text.toString()
-
-                if (email.isEmpty() || password.isEmpty()) {
-                    showToast(getString(R.string.fill_all_fields))
-                    return@setOnClickListener
-                }
-
-                FirebaseRepository.loginAndLoadProfile(
-                    email,
-                    password,
-                    onSuccess = { uid ->
-                        showToast(getString(R.string.login_successful))
-                        saveUserToPreferences(uid)
-                        startActivity(Intent(this, MainMenuActivity::class.java))
-                        finish()
-                    },
-                    onError = { message ->
-                        showToast(message)
-                    }
-                )
-            }
-
-        }
-
+        // Forgot password
         tvForgotPassword.setOnClickListener {
             val email = etEmail.text.toString().trim()
             if (email.isEmpty()) {
-                Toast.makeText(this, "Por favor, introduce tu correo electrónico", Toast.LENGTH_SHORT).show()
+                showToast("Por favor, introduce tu correo electrónico.")
                 return@setOnClickListener
             }
             if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                Toast.makeText(this, "Por favor, introduce un correo válido", Toast.LENGTH_SHORT).show()
+                showToast("Por favor, introduce un correo válido.")
                 return@setOnClickListener
             }
 
             FirebaseRepository.resetPassword(
                 email,
                 onSuccess = {
-                    Toast.makeText(this, "Correo de recuperación enviado. Revisa tu bandeja de entrada.", Toast.LENGTH_LONG).show()
+                    showToast("Correo de recuperación enviado. Revisa tu bandeja de entrada.")
                 },
                 onFailure = { e ->
                     val errorMessage = when (e.message) {
@@ -215,29 +148,29 @@ class LoginActivity : AppCompatActivity() {
                             "No existe una cuenta con este correo."
                         else -> "Error al enviar el correo: ${e.message}"
                     }
-                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+                    showToast(errorMessage)
                 }
             )
-
         }
 
         // Register button
         btnRegister.setOnClickListener {
-            val name = etName.text.toString()
-            val surname = etSurname.text.toString()
-            val email = etEmailRegister.text.toString()
-            val password = etPasswordRegister.text.toString()
+            val name = etName.text.toString().trim()
+            val surname = etSurname.text.toString().trim()
+            val email = etEmailRegister.text.toString().trim()
+            val password = etPasswordRegister.text.toString().trim()
             val gender = spinnerGender.selectedItem.toString()
             val genderPref = spinnerGenderPref.selectedItem.toString()
-            val ageRangeMin = ageRangeBar.values[0].toInt() // Obtener valor del RangeSlider
+            val ageRangeMin = ageRangeBar.values[0].toInt()
             val ageRangeMax = ageRangeBar.values[1].toInt()
             val birthdate = birthdateDisplay.text.toString()
-            val desc = descEdit.text.toString()
+            val desc = descEdit.text.toString().trim()
+            val distanciaMax = 5 + seekBarDistancia.progress
             val age = calculateAge(birthdate)
 
-            if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty()
-                || gender.isEmpty() || genderPref.isEmpty() || desc.isEmpty()
-                || birthdate == "Selecciona tu fecha de nacimiento" || age == -1
+            if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty() ||
+                gender.isEmpty() || genderPref.isEmpty() || desc.isEmpty() ||
+                birthdate == "Selecciona tu fecha de nacimiento" || age == -1
             ) {
                 showToast(getString(R.string.fill_all_fields))
                 return@setOnClickListener
@@ -247,57 +180,24 @@ class LoginActivity : AppCompatActivity() {
                 .addOnSuccessListener { authResult ->
                     val user = authResult.user ?: return@addOnSuccessListener
                     val uid = user.uid
-                    val profileId = "profile_$uid"
 
-                    // Enviar correo de verificación
+                    // Send verification email
                     user.sendEmailVerification()
                         .addOnSuccessListener {
-                            Toast.makeText(this, "Verifica tu correo antes de continuar", Toast.LENGTH_LONG).show()
-
-                            // Guardar perfil, pero NO iniciar sesión
-                            val perfilData = hashMapOf(
-                                "name" to name,
-                                "surname" to surname,
-                                "email" to email,
-                                "birthdate" to birthdate,
-                                "genero" to gender,
-                                "preferenciaGenero" to genderPref,
-                                "rangoEdadBuscado" to ageRange,
-                                "distanciaMax" to (5 + seekBarDistancia.progress),
-                                "bio" to desc,
-                                "imgUrl" to "",
-                                "notificaciones" to true
-                            )
-
-                            val userData = hashMapOf(
-                                "status" to "active",
-                                "profileId" to profileId
-                            )
-
-                            db.collection("profiles").document(profileId).set(perfilData)
-                                .addOnSuccessListener {
-                                    db.collection("user").document(uid).set(userData)
-                                        .addOnSuccessListener {
-                                            FirebaseAuth.getInstance().signOut() // Importante: cerrar sesión
-                                            viewSwitcher.showPrevious() // Volver al login
-                                            Toast.makeText(this, "Registro exitoso. Revisa tu correo", Toast.LENGTH_LONG).show()
-                                        }
-                                }
-                    val uid = authResult.user?.uid ?: return@addOnSuccessListener
-
-                    FirebaseRepository.createUserProfile(
-                        uid, name, surname, email, birthdate, gender, genderPref, ageRangeMin, ageRangeMax , desc
-                    )
-                        .addOnSuccessListener {
-                            showToast(getString(R.string.user_registered_successfully))
-                            saveUserToPreferences(uid)
-                            startActivity(Intent(this, LoginInterestsActivity::class.java))
-                        }
-                        .addOnFailureListener { e ->
-                            showToast(getString(R.string.error_saving_data, e.message))
+                            // Create user profile
+                            FirebaseRepository.createUserProfile(
+                                uid, name, surname, email, birthdate, gender, genderPref,
+                                ageRangeMin, ageRangeMax, desc, distanciaMax
+                            ).addOnSuccessListener {
+                                showToast("Registro exitoso. Revisa tu correo para verificar tu cuenta.")
+                                FirebaseAuth.getInstance().signOut()
+                                viewSwitcher.showPrevious() // Return to login
+                            }.addOnFailureListener { e ->
+                                showToast(getString(R.string.error_saving_data, e.message))
+                            }
                         }
                         .addOnFailureListener {
-                            Toast.makeText(this, "No se pudo enviar el correo de verificación", Toast.LENGTH_LONG).show()
+                            showToast("No se pudo enviar el correo de verificación.")
                         }
                 }
                 .addOnFailureListener { e ->
@@ -305,27 +205,23 @@ class LoginActivity : AppCompatActivity() {
                 }
         }
 
-
-
-
         // Switcher actions
         tvGoToRegister.setOnClickListener { viewSwitcher.showNext() }
         tvGoToLogin.setOnClickListener { viewSwitcher.showPrevious() }
 
         // Spinners
         val genderOptions = arrayOf("Hombre", "Mujer", "No-binario")
-
         val genderPrefOptions = arrayOf("Masculino", "Femenino", "Cualquiera")
         spinnerGender.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderOptions)
         spinnerGenderPref.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderPrefOptions)
 
+        // SeekBar for distance
         seekBarDistancia.max = 195
         seekBarDistancia.progress = 0
         tvDistRangeMin.text = "5 km"
         seekBarDistancia.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 tvDistRangeMin.text = getString(R.string.km_unit, 5 + progress)
-
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -342,9 +238,9 @@ class LoginActivity : AppCompatActivity() {
     private fun calculateAge(birthdate: String): Int {
         val parts = birthdate.split("/")
         if (parts.size != 3) return -1
-        val day = parts[0].toInt()
-        val month = parts[1].toInt()
-        val year = parts[2].toInt()
+        val day = parts[0].toIntOrNull() ?: return -1
+        val month = parts[1].toIntOrNull() ?: return -1
+        val year = parts[2].toIntOrNull() ?: return -1
 
         val today = Calendar.getInstance()
         val dob = Calendar.getInstance()
@@ -376,12 +272,9 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setupAgeRangeBar() {
-        // Establecer valores iniciales
         ageRangeBar.values = listOf(18f, 99f)
-        // Actualizar TextViews con valores iniciales
         tvAgeRangeMin.text = "Edad mínima: ${ageRangeBar.values[0].toInt()}"
         tvAgeRangeMax.text = "Edad máxima: ${ageRangeBar.values[1].toInt()}"
-        // Listener para cambios en el rango
         ageRangeBar.addOnChangeListener { slider, _, _ ->
             val values = slider.values
             tvAgeRangeMin.text = "Edad mínima: ${values[0].toInt()}"

@@ -10,6 +10,7 @@ import com.example.frikidates.HolderChats
 import com.example.frikidates.MensajeRecibir
 import com.example.frikidates.Profile
 import com.example.frikidates.R
+import com.example.frikidates.util.LocationEncryptionHelper
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.AuthResult
@@ -968,6 +969,46 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
             ))
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun saveUserLocation(
+        userId: String,
+        encryptedLocation: String,
+        latitude: Double,
+        longitude: Double,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val profileRef = db.collection("profiles").document("profile_$userId")
+        val locationCollectionRef = profileRef.collection("location")
+        val lastLocationDocRef = locationCollectionRef.document("actual")
+
+        lastLocationDocRef.get().addOnSuccessListener { document ->
+            val lastTimestamp = document.getTimestamp("timestamp")?.toDate()
+            val lastEncryptedLocation = document.getString("encryptedLocation")
+
+            val now = System.currentTimeMillis()
+            val shouldUpdateTime = lastTimestamp == null || now - lastTimestamp.time > 5 * 60 * 1000
+            val shouldUpdateLocation = lastEncryptedLocation == null || LocationEncryptionHelper.hasLocationChangedSignificantly(
+                lastEncryptedLocation,
+                latitude,
+                longitude
+            )
+
+            if (shouldUpdateTime || shouldUpdateLocation) {
+                val updateData = mapOf(
+                    "encryptedLocation" to encryptedLocation,
+                    "timestamp" to FieldValue.serverTimestamp()
+                )
+                lastLocationDocRef.set(updateData)
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { e -> onFailure(e) }
+            } else {
+                onSuccess()
+            }
+        }.addOnFailureListener { e ->
+            onFailure(e)
+        }
     }
 
 }
