@@ -54,14 +54,14 @@ object FirebaseRepository {
         return auth.createUserWithEmailAndPassword(email, password)
     }
 
-    fun getUserDocument(uid: String) =
-        db.collection("users").document(uid).get()
+//    fun getUserDocument(uid: String) =
+//        db.collection("users").document(uid).get()
 
     fun getProfileDocument(profileId: String) =
         db.collection("profiles").document(profileId).get()
 
     fun saveUserDocument(uid: String, userData: Map<String, Any>): Task<Void> {
-        return db.collection("users").document(uid).set(userData)
+        return db.collection("user").document(uid).set(userData)
     }
 
     fun saveProfileDocument(profileId: String, profileData: Map<String, Any>): Task<Void> {
@@ -82,7 +82,7 @@ object FirebaseRepository {
         ageRangeMin: Int,
         ageRangeMax: Int,
         desc: String,
-        distanciaMax: Int = 50
+        distanciaMax: Int
     ): Task<Void> {
         val profileId = "profile_$uid"
 
@@ -97,7 +97,6 @@ object FirebaseRepository {
             "rangoEdadMax" to ageRangeMax,
             "distanciaMax" to distanciaMax,
             "bio" to desc,
-            "imgUrl" to "",
             "notificaciones" to true
         )
 
@@ -223,26 +222,26 @@ object FirebaseRepository {
         }
     }
 
-    fun saveImageUrl(
-        userId: String,
-        imageUrl: String,
-        onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit,
-        context: Context
-    ) {
-        val imageData = hashMapOf("imageUrl" to imageUrl)
-        FirebaseFirestore.getInstance().collection("users")
-            .document(userId)
-            .set(imageData, SetOptions.merge())
-            .addOnSuccessListener {
-                Log.d("Firestore", context.getString(R.string.log_firestore_image_saved, imageUrl))
-                onSuccess()
-            }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", context.getString(R.string.log_firestore_image_save_error, e.message ?: ""))
-                onFailure(e)
-            }
-    }
+//    fun saveImageUrl(
+//        userId: String,
+//        imageUrl: String,
+//        onSuccess: () -> Unit,
+//        onFailure: (Exception) -> Unit,
+//        context: Context
+//    )
+//        val imageData = hashMapOf("imageUrl" to imageUrl)
+//        FirebaseFirestore.getInstance().collection("users")
+//            .document(userId)
+//            .set(imageData, SetOptions.merge())
+//            .addOnSuccessListener {
+//                Log.d("Firestore", context.getString(R.string.log_firestore_image_saved, imageUrl))
+//                onSuccess()
+//            }
+//            .addOnFailureListener { e ->
+//                Log.e("Firestore", context.getString(R.string.log_firestore_image_save_error, e.message ?: ""))
+//                onFailure(e)
+//            }
+//    }
 
     fun loadUserImages1(userId: String, onImagesLoaded: (List<String>) -> Unit, onFailure: (Exception) -> Unit) {
         val storageRef = FirebaseStorage.getInstance().reference.child("$userId/")
@@ -323,17 +322,25 @@ object FirebaseRepository {
 
     fun getMatchedUserId(
         context: Context,
-        userId: String,
+        userId: String, // matchId
         onSuccess: (String) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        val docRef = db.collection("matches").document(userId)
-        docRef.get()
+        val currentUserId = auth.currentUser?.uid ?: run {
+            onFailure(Exception(context.getString(R.string.error_user_not_authenticated)))
+            return
+        }
+
+        db.collection("matches")
+            .document(userId)
+            .get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
                     val matchedUserId = doc.getString("matchedUserId")
-                    if (matchedUserId != null) {
-                        onSuccess(matchedUserId)
+                    val currentUserIdInMatch = doc.getString("currentUserId")
+                    if (matchedUserId != null && currentUserIdInMatch != null) {
+                        val otherUserId = if (currentUserId == currentUserIdInMatch) matchedUserId else currentUserIdInMatch
+                        onSuccess("profile_$otherUserId")
                     } else {
                         onFailure(Exception(context.getString(R.string.error_matched_user_id_not_found)))
                     }
@@ -347,41 +354,42 @@ object FirebaseRepository {
     }
 
 
-fun getUserNameAndObserveStatus(
-    context: Context,
-    matchedUserId: String,
-    onNameReceived: (String) -> Unit,
-    onStatusChanged: (String) -> Unit,
-    onError: (Exception) -> Unit
-) {
-    val profilesCollection = context.getString(R.string.collection_profiles)
-    val fieldName = context.getString(R.string.field_name)
-    val prefixProfile = context.getString(R.string.prefix_profile)
-    val rtdbUserStatusPath = context.getString(R.string.rtdb_user_status_path)
+    fun getUserNameAndObserveStatus(
+        context: Context,
+        matchedUserId: String,
+        onNameReceived: (String) -> Unit,
+        onStatusChanged: (String) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val profilesCollection = context.getString(R.string.collection_profiles)
+        val fieldName = context.getString(R.string.field_name)
+        val rtdbUserStatusPath = context.getString(R.string.rtdb_user_status_path)
 
-    db.collection(profilesCollection)
-        .document(matchedUserId)
-        .get()
-        .addOnSuccessListener { profileDoc ->
-            val nombreReal = profileDoc.getString(fieldName) ?: "Usuario"
-            onNameReceived(nombreReal)
+        val profileId = if (matchedUserId.startsWith("profile_")) matchedUserId else "profile_$matchedUserId"
 
-            val folderName = matchedUserId.removePrefix(prefixProfile)
-            val statusPath = String.format(rtdbUserStatusPath, folderName)
-            val estadoRef = rtdbInstance.getReference(statusPath)
+        db.collection("profiles")
+            .document(profileId)
+            .get()
+            .addOnSuccessListener { profileDoc ->
+                val nombreReal = profileDoc.getString(fieldName) ?: "Usuario"
+                onNameReceived(nombreReal)
 
-            estadoRef.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val estado = snapshot.getValue(String::class.java)
-                    if (estado != null) onStatusChanged(estado)
-                }
-                override fun onCancelled(error: DatabaseError) {
-                    onError(Exception(error.message))
-                }
-            })
-        }
-        .addOnFailureListener { e -> onError(e) }
-}
+                val folderName = profileId.removePrefix(context.getString(R.string.prefix_profile))
+                val statusPath = String.format(rtdbUserStatusPath, folderName)
+                val estadoRef = rtdbInstance.getReference(statusPath)
+
+                estadoRef.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val estado = snapshot.getValue(String::class.java)
+                        if (estado != null) onStatusChanged(estado)
+                    }
+                    override fun onCancelled(error: DatabaseError) {
+                        onError(Exception(error.message))
+                    }
+                })
+            }
+            .addOnFailureListener { e -> onError(e) }
+    }
 
 
 fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFailure: () -> Unit) {
@@ -403,6 +411,7 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
             }
             .addOnFailureListener { onFailure() }
     }
+
     fun sendTextMessage(
         matchId: String,
         senderId: String,
@@ -414,19 +423,48 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
             senderId = senderId,
             text = texto,
             timestamp = FieldValue.serverTimestamp(),
-            type = "texto" // tipo literal, no se toma de strings.xml
+            type = "texto"
         )
 
-        FirebaseFirestore.getInstance()
-            .collection("matches") // usa el nombre real de la colección en Firestore
+        db.collection("matches")
             .document(matchId)
-            .collection("messages") // subcolección donde están los mensajes
-            .document("mensaje_${System.currentTimeMillis()}") // ID único basado en timestamp
+            .collection("messages")
+            .document("mensaje_${System.currentTimeMillis()}")
             .set(mensaje)
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                // Actualizar lastMessage en subcolección matches para ambos usuarios
+                db.collection("matches")
+                    .document(matchId)
+                    .get()
+                    .addOnSuccessListener { doc ->
+                        val currentUserId = doc.getString("currentUserId") ?: return@addOnSuccessListener
+                        val matchedUserId = doc.getString("matchedUserId") ?: return@addOnSuccessListener
+
+                        val updateData = mapOf(
+                            "lastMessage" to texto,
+                            "timestamp" to FieldValue.serverTimestamp()
+                        )
+
+                        db.collection("profiles")
+                            .document("profile_$currentUserId")
+                            .collection("matches")
+                            .document(matchId)
+                            .update(updateData)
+                            .addOnSuccessListener {
+                                db.collection("profiles")
+                                    .document("profile_$matchedUserId")
+                                    .collection("matches")
+                                    .document(matchId)
+                                    .update(updateData)
+                                    .addOnSuccessListener { onSuccess() }
+                                    .addOnFailureListener { e -> onFailure(e) }
+                            }
+                            .addOnFailureListener { e -> onFailure(e) }
+                    }
+                    .addOnFailureListener { e -> onFailure(e) }
+            }
             .addOnFailureListener { e -> onFailure(e) }
     }
-
 
     fun listenMessages(
         matchId: String,
@@ -481,17 +519,16 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
                     return@addOnSuccessListener
                 }
 
-                // Para sincronizar todas las llamadas async de perfiles
                 val total = documents.size()
                 var processed = 0
 
                 for (doc in documents) {
+                    val matchId = doc.id // Obtener matchId
                     val matchedUserId = doc.getString("matchedUserId") ?: run {
                         processed++
                         if (processed == total) onChatsLoaded(chatList)
                         return@addOnSuccessListener
                     }
-
                     val lastMessage = doc.getString("lastMessage") ?: ""
                     val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
 
@@ -502,6 +539,7 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
                             val nombreReal = profileDoc.getString("name") ?: matchedUserId
 
                             val chat = HolderChats(
+                                matchId = matchId, // Incluir matchId
                                 userId = matchedUserId,
                                 username = nombreReal,
                                 lastMessage = lastMessage,
@@ -511,7 +549,6 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
                             chatList.add(chat)
                             processed++
                             if (processed == total) {
-                                // Cuando todos los perfiles se han procesado, devolvemos la lista
                                 onChatsLoaded(chatList)
                             }
                         }
@@ -853,13 +890,13 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
                 onFailure(exception)
             }
     }
-    fun saveImageUrlToFirestore(userId: String, imageUrl: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-        val imageData = hashMapOf("imageUrl" to imageUrl)
-        db.collection("users").document(userId)
-            .set(imageData, SetOptions.merge())
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onFailure(e) }
-    }
+//    fun saveImageUrlToFirestore(userId: String, imageUrl: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+//        val imageData = hashMapOf("imageUrl" to imageUrl)
+//        db.collection("users").document(userId)
+//            .set(imageData, SetOptions.merge())
+//            .addOnSuccessListener { onSuccess() }
+//            .addOnFailureListener { e -> onFailure(e) }
+//    }
 
     fun loadUserImages(userId: String, onSuccess: (List<Uri>) -> Unit, onFailure: (Exception) -> Unit) {
         val storageRef = storage.reference.child("$userId/")
@@ -899,6 +936,13 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
         val profileId = "profile_$userId"
         db.collection("profiles").document(profileId)
             .update("bio", description)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
+
+    fun updateUserProfile(userId: String, updates: Map<String, Any>, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        db.collection("profiles").document("profile_$userId").update(updates)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }
@@ -976,23 +1020,23 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }
-
-    fun saveUserEdad(
-        userId: String,
-        ageMin: Int,
-        ageMax: Int,
-        onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
-    ) {
-        db.collection("users").document(userId)
-            .set(mapOf(
-                "age_min" to ageMin,
-                "age_max" to ageMax
-                // Añade otros campos según sea necesario
-            ))
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onFailure(e) }
-    }
+//
+//    fun saveUserEdad(
+//        userId: String,
+//        ageMin: Int,
+//        ageMax: Int,
+//        onSuccess: () -> Unit,
+//        onFailure: (Exception) -> Unit
+//    ) {
+//        db.collection("users").document(userId)
+//            .set(mapOf(
+//                "age_min" to ageMin,
+//                "age_max" to ageMax
+//                // Añade otros campos según sea necesario
+//            ))
+//            .addOnSuccessListener { onSuccess() }
+//            .addOnFailureListener { e -> onFailure(e) }
+//    }
 
     fun saveUserLocation(
         userId: String,
@@ -1032,6 +1076,65 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
         }.addOnFailureListener { e ->
             onFailure(e)
         }
+    }
+
+
+    // javi momento
+
+    fun createMatch(
+        currentUserId: String,
+        matchedUserId: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        // Asegurar IDs sin prefijo
+        val cleanCurrentUserId = currentUserId.removePrefix("profile_")
+        val cleanMatchedUserId = matchedUserId.removePrefix("profile_")
+
+        val matchId = if (cleanCurrentUserId < cleanMatchedUserId)
+            "$cleanCurrentUserId-$cleanMatchedUserId"
+        else "$cleanMatchedUserId-$cleanCurrentUserId"
+
+        // Crear documento en colección matches
+        val matchData = mapOf(
+            "currentUserId" to cleanCurrentUserId,
+            "matchedUserId" to cleanMatchedUserId,
+            "timestamp" to FieldValue.serverTimestamp()
+        )
+
+        db.collection("matches")
+            .document(matchId)
+            .set(matchData)
+            .addOnSuccessListener {
+                // Actualizar subcolección matches en profiles para ambos usuarios
+                val currentUserMatch = mapOf(
+                    "matchedUserId" to "profile_$cleanMatchedUserId",
+                    "lastMessage" to "",
+                    "timestamp" to FieldValue.serverTimestamp()
+                )
+                val matchedUserMatch = mapOf(
+                    "matchedUserId" to "profile_$cleanCurrentUserId",
+                    "lastMessage" to "",
+                    "timestamp" to FieldValue.serverTimestamp()
+                )
+
+                db.collection("profiles")
+                    .document("profile_$cleanCurrentUserId")
+                    .collection("matches")
+                    .document(matchId)
+                    .set(currentUserMatch)
+                    .addOnSuccessListener {
+                        db.collection("profiles")
+                            .document("profile_$cleanMatchedUserId")
+                            .collection("matches")
+                            .document(matchId)
+                            .set(matchedUserMatch)
+                            .addOnSuccessListener { onSuccess() }
+                            .addOnFailureListener { e -> onFailure(e) }
+                    }
+                    .addOnFailureListener { e -> onFailure(e) }
+            }
+            .addOnFailureListener { e -> onFailure(e) }
     }
 
 }

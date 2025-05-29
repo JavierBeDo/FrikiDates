@@ -17,6 +17,7 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -28,6 +29,7 @@ import com.bumptech.glide.Glide
 import com.example.frikidates.firebase.FirebaseRepository
 import com.example.frikidates.utils.InterestManager
 import com.example.frikidates.util.ProfileUtils
+import com.google.android.material.slider.RangeSlider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +53,16 @@ class PerfilActivity : AppCompatActivity() {
     private lateinit var genderSpinner: Spinner
     private lateinit var genderSpinner2: Spinner
     private lateinit var notificationCheckBox: CheckBox
+
+    //años seek bar y distancia
+
+    private lateinit var ageRangeSlider: RangeSlider
+    private lateinit var tvAgeRangeMin: TextView
+    private lateinit var tvAgeRangeMax: TextView
+    private lateinit var seekBarDistancia: SeekBar
+    private lateinit var tvDistanceMin: TextView
+    private lateinit var tvDistanceMax: TextView
+
     private var user: User? = null
 
     private val REQUEST_CODE_GALLERY = 1001
@@ -68,6 +80,21 @@ class PerfilActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_perfil)
+
+
+
+        //generar un match
+
+        FirebaseRepository.createMatch(
+            currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+            matchedUserId = "profile_2H1o6XCEBAVHFZpt3m443wm3zMI2", // ID del otro usuario
+            onSuccess = {
+                Log.d("MainActivity", "Match creado")
+            },
+            onFailure = { e ->
+                Log.e("MainActivity", "Error creando match: ${e.message}")
+            }
+        )
 
         val logoutTextView = findViewById<TextView>(R.id.tv_logout)
         logoutTextView.setOnClickListener {
@@ -93,15 +120,57 @@ class PerfilActivity : AppCompatActivity() {
         genderSpinner2 = findViewById(R.id.genderSpinner2)
         notificationCheckBox = findViewById(R.id.notificationCheckBox)
 
+
+        ////notificaciones////
+
+        // Inicializar CheckBox
+        notificationCheckBox = findViewById(R.id.notificationCheckBox)
+
+        // Solicitar permiso al iniciar
+        RequestNotification.requestNotificationPermission(this)
+
+
+        // Initialize new views
+        ageRangeSlider = findViewById(R.id.age_range_slider)
+        tvAgeRangeMin = findViewById(R.id.tv_age_range_min)
+        tvAgeRangeMax = findViewById(R.id.tv_age_range_max)
+        seekBarDistancia = findViewById(R.id.seekBarDistancia)
+        tvDistanceMin = findViewById(R.id.tv_distance_min)
+        tvDistanceMax = findViewById(R.id.tv_distance_max)
+
+        // Setup Age Range Slider
+        ageRangeSlider.values = listOf(18f, 99f)
+        tvAgeRangeMin.text = "Edad mínima: ${ageRangeSlider.values[0].toInt()}"
+        tvAgeRangeMax.text = "Edad máxima: ${ageRangeSlider.values[1].toInt()}"
+        ageRangeSlider.addOnChangeListener { slider, _, _ ->
+            val values = slider.values
+            tvAgeRangeMin.text = "Edad mínima: ${values[0].toInt()}"
+            tvAgeRangeMax.text = "Edad máxima: ${values[1].toInt()}"
+        }
+
+        // Setup Distance SeekBar
+        seekBarDistancia.max = 195
+        seekBarDistancia.progress = 0
+        tvDistanceMin.text = "5 km"
+        tvDistanceMax.text = "200 km"
+        seekBarDistancia.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                tvDistanceMin.text = "${5 + progress} km"
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
         // Setup navigation with interest saving
         BottomNavManager.setupNavigation(this) {
             // Save description
+            saveProfileData(userId)
             updateDescriptionInDatabase(userId, descEdit.text.toString())
             // Save interests before navigating
             FirebaseRepository.saveUserInterests(
                 interests = interestManager.selectedTags.toList(),
                 onSuccess = {
-                    Toast.makeText(this, getString(R.string.interests_saved), Toast.LENGTH_SHORT).show()
+                   // Toast.makeText(this, getString(R.string.interests_saved), Toast.LENGTH_SHORT).show()
                 },
                 onFailure = {
                     Toast.makeText(this, getString(R.string.error_saving), Toast.LENGTH_SHORT).show()
@@ -341,6 +410,7 @@ class PerfilActivity : AppCompatActivity() {
         imageView.tag = uri.toString()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun loadUserInfo() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: run {
             Toast.makeText(this, getString(R.string.error_user_not_authenticated), Toast.LENGTH_SHORT).show()
@@ -349,20 +419,54 @@ class PerfilActivity : AppCompatActivity() {
 
         FirebaseRepository.loadUserInfo(uid,
             onSuccess = { data ->
-                val name = data["name"] as? String
+                val name = data["name"] as? String ?: "Unknown"
                 val birthdate = data["birthdate"] as? String
-                val gender = data["genero"] as? String
-                val description = data["bio"] as? String
-                val surname = data["surname"] as? String
-                val edad = birthdate?.let { ProfileUtils.calculateAge(it).takeIf { it > 0 }?.toString() } ?: "Desconocida"
+                val gender = data["genero"] as? String ?: "Not specified"
+                val description = data["bio"] as? String ?: ""
+                val surname = data["surname"] as? String ?: ""
 
-                val userInfoText = getString(R.string.user_info_display, name, surname, edad, gender)
-                findViewById<TextView>(R.id.userInfo).text = userInfoText
+                // Handle age range and distance with type safety
+                val ageRangeMin = when (val min = data["rangoEdadMin"]) {
+                    is Long -> min.toInt()
+                    is Int -> min
+                    is String -> min.toIntOrNull() ?: 18
+                    else -> 18
+                }
+                val ageRangeMax = when (val max = data["rangoEdadMax"]) {
+                    is Long -> max.toInt()
+                    is Int -> max
+                    is String -> max.toIntOrNull() ?: 99
+                    else -> 99
+                }
+                val distanciaMax = when (val dist = data["distanciaMax"]) {
+                    is Long -> dist.toInt()
+                    is Int -> dist
+                    is String -> dist.toIntOrNull() ?: 5
+                    else -> 5
+                }
+
+                // Update UI
+                val edad = birthdate?.let { ProfileUtils.calculateAge(it).takeIf { it > 0 }?.toString() } ?: "Desconocida"
+                findViewById<TextView>(R.id.userInfo).text = getString(R.string.user_info_display, name, surname, edad, gender)
                 descEdit.setText(description)
+
+                // Update Age Range Slider and TextViews
+                ageRangeSlider.values = listOf(ageRangeMin.toFloat(), ageRangeMax.toFloat())
+                tvAgeRangeMin.text = "Edad mínima: $ageRangeMin"
+                tvAgeRangeMax.text = "Edad máxima: $ageRangeMax"
+
+                // Update Distance SeekBar and TextViews
+                seekBarDistancia.progress = (distanciaMax - 5).coerceIn(0, 195)
+                tvDistanceMin.text = "$distanciaMax km"
+                tvDistanceMax.text = "200 km"
+
+                // Log for debugging
+                Log.d("PerfilActivity", "Loaded: rangoEdadMin=$ageRangeMin, rangoEdadMax=$ageRangeMax, distanciaMax=$distanciaMax")
             },
             onFailure = { e ->
                 val errorMessage = getString(R.string.error_getting_user_info, e.message)
                 Log.e("Firestore", errorMessage, e)
+                Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -378,6 +482,23 @@ class PerfilActivity : AppCompatActivity() {
             }
         )
     }
+
+    private fun saveProfileData(userId: String) {
+        val updates = mapOf(
+            "rangoEdadMin" to ageRangeSlider.values[0].toInt(),
+            "rangoEdadMax" to ageRangeSlider.values[1].toInt(),
+            "distanciaMax" to (5 + seekBarDistancia.progress)
+        )
+        FirebaseRepository.updateUserProfile(userId, updates,
+            onSuccess = {
+              //  Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show()
+            },
+            onFailure = { e ->
+                Toast.makeText(this, "Error updating profile: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
 
     private fun setupGenderSpinner(spinner: Spinner, fieldName: String) {
         FirebaseRepository.loadGenders(
@@ -532,4 +653,23 @@ class PerfilActivity : AppCompatActivity() {
             .setNegativeButton("Cancelar", null)
             .show()
     }
+
+//    override fun onRequestPermissionsResult(
+//        requestCode: Int,
+//        permissions: Array<out String>,
+//        grantResults: IntArray
+//    ) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//        if (requestCode == RequestNotification.REQUEST_NOTIFICATION_PERMISSION) {
+//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                Toast.makeText(this, "Permiso de notificaciones concedido", Toast.LENGTH_SHORT).show()
+//                // Opcional: Activar CheckBox si estaba desactivado
+//                notificationCheckBox.isChecked = true
+//            } else {
+//                Toast.makeText(this, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
+//                // Desmarcar CheckBox si el permiso es denegado
+//                notificationCheckBox.isChecked = false
+//            }
+//        }
+//    }
 }

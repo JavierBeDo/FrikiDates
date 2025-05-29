@@ -77,7 +77,7 @@ class InterestManager(
 
             if (chunked.size > 1) {
                 val arrow = ImageView(context).apply {
-                    setImageResource(R.drawable.flecha)
+                    setImageResource(R.drawable.downarrow)
                     layoutParams = LinearLayout.LayoutParams(36.dp, 24.dp).apply {
                         marginStart = 4.dp
                     }
