@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.example.frikidates.firebase.FirebaseRepository
 import com.example.frikidates.utils.InterestManager
+import com.example.frikidates.util.ProfileUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
@@ -35,9 +36,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import java.time.LocalDate
-import java.time.Period
-import java.time.format.DateTimeFormatter
 
 class PerfilActivity : AppCompatActivity() {
 
@@ -356,7 +354,7 @@ class PerfilActivity : AppCompatActivity() {
                 val gender = data["genero"] as? String
                 val description = data["bio"] as? String
                 val surname = data["surname"] as? String
-                val edad = birthdate?.let { calcularEdad(it) } ?: "Desconocida"
+                val edad = birthdate?.let { ProfileUtils.calculateAge(it).takeIf { it > 0 }?.toString() } ?: "Desconocida"
 
                 val userInfoText = getString(R.string.user_info_display, name, surname, edad, gender)
                 findViewById<TextView>(R.id.userInfo).text = userInfoText
@@ -466,13 +464,6 @@ class PerfilActivity : AppCompatActivity() {
                 Log.e("Firestore", errorMessage, e)
             }
         )
-    }
-
-    fun calcularEdad(fechaNacimiento: String): Int {
-        val formatter = DateTimeFormatter.ofPattern("d/M/yyyy")
-        val fechaNacimiento = LocalDate.parse(fechaNacimiento, formatter)
-        val hoy = LocalDate.now()
-        return Period.between(fechaNacimiento, hoy).years
     }
 
     private fun showLogoutConfirmation() {

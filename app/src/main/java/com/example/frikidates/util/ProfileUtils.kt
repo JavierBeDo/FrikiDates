@@ -1,34 +1,26 @@
 package com.example.frikidates.util
 
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 object ProfileUtils {
-    fun calcularEdad(fechaNacimiento: String): Int {
+    fun calculateAge(birthdate: String?): Int {
+        if (birthdate.isNullOrEmpty()) return 0
         return try {
-            val partes = fechaNacimiento.split("/") // Espera "dd/MM/yyyy"
-            if (partes.size != 3) return 0
-
-            val anio = partes[2].toInt()
-            val mes = partes[1].toInt()
-            val dia = partes[0].toInt()
-
-            val hoy = Calendar.getInstance()
-            val nacimiento = Calendar.getInstance()
-            nacimiento.set(anio, mes - 1, dia)
-
-            var edad = hoy.get(Calendar.YEAR) - nacimiento.get(Calendar.YEAR)
-
-            if (hoy.get(Calendar.DAY_OF_YEAR) < nacimiento.get(Calendar.DAY_OF_YEAR)) {
-                edad--
-            }
-
-            edad
+            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val birth = sdf.parse(birthdate) ?: return 0
+            val today = Calendar.getInstance()
+            val birthCal = Calendar.getInstance().apply { time = birth }
+            var age = today.get(Calendar.YEAR) - birthCal.get(Calendar.YEAR)
+            if (today.get(Calendar.DAY_OF_YEAR) < birthCal.get(Calendar.DAY_OF_YEAR)) age--
+            age
         } catch (e: Exception) {
             0
         }
     }
 
-    fun calcularDistancia(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val radioTierra = 6371.0 // Radio de la Tierra en km
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
@@ -37,5 +29,12 @@ object ProfileUtils {
                 Math.sin(dLon / 2) * Math.sin(dLon / 2)
         val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
         return radioTierra * c
+    }
+
+    fun calculateCompatibility(userInterests: List<String>, profileInterests: List<String>): Int {
+        if (userInterests.isEmpty() || profileInterests.isEmpty()) return 0
+        val common = userInterests.intersect(profileInterests.toSet()).size
+        val totalUnique = userInterests.size + profileInterests.size - common
+        return if (totalUnique > 0) (common * 100) / totalUnique else 0
     }
 }

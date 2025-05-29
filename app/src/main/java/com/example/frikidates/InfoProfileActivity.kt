@@ -1,6 +1,5 @@
 package com.example.frikidates
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -62,7 +61,7 @@ class InfoProfileActivity : AppCompatActivity() {
         // Establecer información del perfil
         nameText.text = profile.name
         try {
-            val age = ProfileUtils.calcularEdad(profile.birthdate)
+            val age = ProfileUtils.calculateAge(profile.birthdate)
             ageText.text = if (age > 0) "Edad: $age" else "Edad: N/D"
         } catch (e: Exception) {
             Log.e("InfoProfileActivity", "Error calculating age: ${e.message}")
@@ -80,7 +79,7 @@ class InfoProfileActivity : AppCompatActivity() {
             val decryptedLocation = LocationEncryptionHelper.decryptLocation(profile.encryptedLocation)
             if (decryptedLocation != null && currentLat != 0.0 && currentLon != 0.0) {
                 val (lat, lon) = decryptedLocation
-                val distancia = ProfileUtils.calcularDistancia(currentLat, currentLon, lat, lon)
+                val distancia = ProfileUtils.calculateDistance(currentLat, currentLon, lat, lon)
                 locationText.text = "A ${"%.1f".format(distancia)} km de distancia"
             } else {
                 locationText.text = "Ubicación: N/D"
@@ -129,7 +128,7 @@ class InfoProfileActivity : AppCompatActivity() {
         return TextView(this).apply {
             this.text = formattedText
             textSize = 11f
-            setTextColor(android.graphics.Color.WHITE)
+            setTextColor(android.graphics.Color.BLACK)
             setPadding(6.dp, 6.dp, 6.dp, 6.dp)
             setBackgroundResource(R.drawable.circle_background)
             layoutParams = LinearLayout.LayoutParams(92.dp, 44.dp).apply {

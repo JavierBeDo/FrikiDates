@@ -40,10 +40,15 @@
     <string name="log_on_disconnect_configured">onDisconnect configurado para poner "inactive"</string>
     <string name="log_error_configuring_on_disconnect">Error configurando onDisconnect: %1$s</string>
     <string name="log_status_updated_active">Estado actualizado a "active"</string>
-    <string name="log_error_updating_status_active">Error actualizando estado a "active': %1$"s</string>
+    <string name="log_error_updating_status_active">Error actualizando estado a "active: %1$"s</string>
     <string name="log_not_connected_rtdb">No conectado a RTDB</string>
     <string name="error_matched_user_id_not_found">matchedUserId no encontrado</string>
-
+    <string name="age_format">Edad: %d</string>
+    <string name="compatibility_low">Poco compatible</string>
+    <string name="compatibility_medium">Compatible</string>
+    <string name="compatibility_high">Muy compatible</string>
+    <string name="distance_format">A %s km de distancia</string>
+    <string name="distance_unknown">Distancia: N/D</string>
 
     <!-- Colecciones Firestore -->
     <string name="collection_profiles">profiles</string>
@@ -96,12 +101,12 @@
     <string name="error_loading_user_images">Error loading user images: %1$s</string>
 
 
-        <string name="upload_success">URL de imagen guardada exitosamente: %1$s</string>
-        <string name="upload_error">Error al subir la imagen: %1$s</string>
-        <string name="save_error">Error al guardar la URL de la imagen: %1$s</string>
-        <string name="saving_image">Guardando URL de imagen para usuario %1$s: %2$s</string>
-        <string name="load_images_success">Imágenes del usuario cargadas exitosamente: %1$d imágenes</string>
-        <string name="load_images_error">Error al cargar las imágenes del usuario: %1$s</string>
+    <string name="upload_success">URL de imagen guardada exitosamente: %1$s</string>
+    <string name="upload_error">Error al subir la imagen: %1$s</string>
+    <string name="save_error">Error al guardar la URL de la imagen: %1$s</string>
+    <string name="saving_image">Guardando URL de imagen para usuario %1$s: %2$s</string>
+    <string name="load_images_success">Imágenes del usuario cargadas exitosamente: %1$d imágenes</string>
+    <string name="load_images_error">Error al cargar las imágenes del usuario: %1$s</string>
 
 
     <!-- loadUserInfo -->

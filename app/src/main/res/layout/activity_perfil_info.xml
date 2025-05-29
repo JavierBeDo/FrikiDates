@@ -56,7 +56,7 @@
 
             <!-- Información del perfil -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/profile_info_card1"
+                android:id="@+id/profile_info_card"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"

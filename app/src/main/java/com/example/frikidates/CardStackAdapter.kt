@@ -44,7 +44,7 @@ class CardStackAdapter(
                     val profile = profiles.getOrNull(position) ?: return@OnClickListener
                     val intent = Intent(context, InfoProfileActivity::class.java).apply {
                         putExtra("PROFILE", profile)
-                        putStringArrayListExtra("CURRENT_INTERESTS", ArrayList(currentUserInterests.filterNotNull()))
+                        putStringArrayListExtra("CURRENT_INTERESTS", ArrayList(currentUserInterests))
                         putExtra("CURRENT_LAT", currentUserLatitude)
                         putExtra("CURRENT_LON", currentUserLongitude)
                     }
@@ -62,11 +62,24 @@ class CardStackAdapter(
         return ViewHolder(view)
     }
 
+    private fun normalizeDateFormat(date: String): String {
+        try {
+            val parts = date.split("/")
+            if (parts.size != 3) return date
+            val day = parts[0].padStart(2, '0')
+            val month = parts[1].padStart(2, '0')
+            val year = parts[2]
+            return "$day/$month/$year"
+        } catch (e: Exception) {
+            return date
+        }
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val profile = profiles.getOrNull(position) ?: return
         Log.d("CardStackAdapter", "Binding profile at position $position: ${profile.name}")
 
-        val imageUrls = profile.images.filterNotNull()
+        val imageUrls = profile.images
         val imageAdapter = ImagePagerAdapter(context, imageUrls)
         holder.imagePager.adapter = imageAdapter
         holder.indicator.setViewPager(holder.imagePager)
@@ -74,10 +87,10 @@ class CardStackAdapter(
 
         holder.nameText.text = profile.name.takeIf { it.isNotBlank() } ?: "Sin nombre"
         try {
-            val edad = ProfileUtils.calcularEdad(profile.birthdate)
-            holder.ageText.text = if (edad > 0) "Edad: $edad" else "Edad: N/D"
+            val edad = ProfileUtils.calculateAge(normalizeDateFormat(profile.birthdate))
+            holder.ageText.text = if (edad > 0) context.getString(R.string.age_format, edad) else "Edad: N/D"
         } catch (e: Exception) {
-            Log.e("CardStackAdapter", "Error calculating age for ${profile.name}: ${e.message}")
+            Log.e("CardStackAdapter", "Error calculating age for ${profile.name}: ${e.message}", e)
             holder.ageText.text = "Edad: N/D"
         }
 
@@ -88,17 +101,11 @@ class CardStackAdapter(
             else -> "?"
         }
 
-        val safeInterests = profile.interests.filterNotNull()
-        val safeUserInterests = currentUserInterests.filterNotNull()
-        val commonInterests = safeInterests.intersect(safeUserInterests.toSet())
-        val compatibilityPercentage = if (safeUserInterests.isNotEmpty()) {
-            (commonInterests.size * 100) / safeUserInterests.size
-        } else 0
-
+        val compatibilityPercentage =  ProfileUtils.calculateCompatibility(currentUserInterests, profiles.flatMap { it.interests })
         holder.compatibilityText.text = when {
-            compatibilityPercentage < 40 -> "Poco compatible"
-            compatibilityPercentage in 40..69 -> "Compatible"
-            else -> "Muy compatible"
+            compatibilityPercentage < 40 -> context.getString(R.string.compatibility_low)
+            compatibilityPercentage in 40..69 -> context.getString(R.string.compatibility_medium)
+            else -> context.getString(R.string.compatibility_high)
         }
         holder.compatibilityText.setTextColor(
             context.getColor(
@@ -114,14 +121,14 @@ class CardStackAdapter(
             val decryptedLocation = LocationEncryptionHelper.decryptLocation(profile.encryptedLocation)
             if (decryptedLocation != null && currentUserLatitude != 0.0 && currentUserLongitude != 0.0) {
                 val (lat, lon) = decryptedLocation
-                val distancia = ProfileUtils.calcularDistancia(currentUserLatitude, currentUserLongitude, lat, lon)
-                holder.locationText.text = "A ${"%.1f".format(distancia)} km de distancia"
+                val distancia = ProfileUtils.calculateDistance(currentUserLatitude, currentUserLongitude, lat, lon)
+                holder.locationText.text = context.getString(R.string.distance_format, "%.1f".format(distancia))
             } else {
-                holder.locationText.text = "Distancia: N/D"
+                holder.locationText.text = context.getString(R.string.distance_unknown)
             }
         } catch (e: Exception) {
-            Log.e("CardStackAdapter", "Error decrypting location for ${profile.name}: ${e.message}")
-            holder.locationText.text = "Distancia: N/D"
+            Log.e("CardStackAdapter", "Error decrypting location for ${profile.name}: ${e.message}", e)
+            holder.locationText.text = context.getString(R.string.distance_unknown)
         }
 
         fun updateImageNavigationButtonsVisibility() {
@@ -135,7 +142,6 @@ class CardStackAdapter(
 
         updateImageNavigationButtonsVisibility()
 
-        // Limpia el callback anterior si existe
         holder.pageChangeCallback?.let {
             holder.imagePager.unregisterOnPageChangeCallback(it)
         }
@@ -158,7 +164,6 @@ class CardStackAdapter(
             val adapter = holder.imagePager.adapter
             if (adapter != null && holder.imagePager.currentItem < adapter.itemCount - 1) {
                 holder.imagePager.setCurrentItem(holder.imagePager.currentItem + 1, true)
-
             }
         }
     }

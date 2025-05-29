@@ -667,24 +667,46 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
                     val id = doc.id
                     val data = doc.data ?: emptyMap<String, Any>()
                     val name = data["name"] as? String ?: ""
-                    val age = 23 // TODO: Obtener edad real si existe
+                    val birthdate = data["birthdate"] as? String ?: ""
                     val gender = data["genero"] as? String ?: "Género desconocido"
-                    val city = data["city"] as? String ?: "Ubicación desconocida"
-                    val compatibility = "Compatibilidad desconocida"
+                    val interests = data["interests"] as? List<String> ?: emptyList()
 
-                    loadImageUrlsFromStorage(id, { images ->
-                        profiles.add(Profile(id, name, age, gender, city, compatibility, images))
-                        loadedCount++
-                        if (loadedCount == filteredDocs.size) {
-                            onSuccess(profiles)
+                    // Obtener encryptedLocation de la subcolección
+                    db.collection("profiles").document(id).collection("location").document("actual").get()
+                        .addOnSuccessListener { locationDoc ->
+                            val encryptedLocation = locationDoc.getString("encryptedLocation") ?: ""
+
+                            // Cargar imágenes
+                            loadImageUrlsFromStorage(id, { images ->
+                                profiles.add(Profile(id, name, birthdate, gender, encryptedLocation, interests, images))
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) {
+                                    onSuccess(profiles)
+                                }
+                            }, { e ->
+                                Log.e("FirebaseRepository", "Error loading images for $id", e)
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) {
+                                    onSuccess(profiles)
+                                }
+                            })
                         }
-                    }, {
-                        // Si falla carga imágenes, aun así sumamos para no bloquear el resultado
-                        loadedCount++
-                        if (loadedCount == filteredDocs.size) {
-                            onSuccess(profiles)
+                        .addOnFailureListener { e ->
+                            Log.e("FirebaseRepository", "Error loading location for $id", e)
+                            // Usar ubicación vacía si falla
+                            loadImageUrlsFromStorage(id, { images ->
+                                profiles.add(Profile(id, name, birthdate, gender, "", interests, images))
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) {
+                                    onSuccess(profiles)
+                                }
+                            }, { e ->
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) {
+                                    onSuccess(profiles)
+                                }
+                            })
                         }
-                    })
                 }
             }
             .addOnFailureListener { e -> onError(e) }
@@ -699,7 +721,8 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
             onFailure(Exception("profileId vacío"))
             return
         }
-        val ref = storage.reference.child(profileId)
+        val userId = profileId.removePrefix("profile_")
+        val ref = storage.reference.child(userId)
         ref.listAll()
             .addOnSuccessListener { listResult: ListResult ->
                 if (listResult.items.isEmpty()) {

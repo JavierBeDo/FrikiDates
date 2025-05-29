@@ -58,7 +58,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Initialize views
         viewSwitcher = findViewById(R.id.viewSwitcher)
-        etEmail = findViewById(R.id.et_login_emai)
+        etEmail = findViewById(R.id.et_login_email)
         etPassword = findViewById(R.id.et_login_password)
         btnLogin = findViewById(R.id.btn_login)
         tvGoToRegister = findViewById(R.id.tv_go_to_register)
