@@ -12,7 +12,6 @@ import com.google.firebase.auth.FirebaseAuth
 
 class ChatsActivity : AppCompatActivity() {
 
-
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: AdapterChats
     private val chatList = mutableListOf<HolderChats>()
@@ -26,7 +25,7 @@ class ChatsActivity : AppCompatActivity() {
 
         adapter = AdapterChats(chatList) { chat ->
             val intent = Intent(this, ChatConcretoActivity::class.java)
-            intent.putExtra("userId", chat.userId)
+            intent.putExtra("matchId", chat.matchId)
             startActivity(intent)
         }
 
@@ -36,6 +35,11 @@ class ChatsActivity : AppCompatActivity() {
         fetchChats()
     }
 
+    override fun onResume() {
+        super.onResume()
+        fetchChats() // Recargar chats para actualizar lastMessage
+    }
+
     private fun fetchChats() {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
@@ -43,7 +47,7 @@ class ChatsActivity : AppCompatActivity() {
             currentUserId,
             onChatsLoaded = { chats ->
                 chatList.clear()
-                chatList.addAll(chats)
+                chatList.addAll(chats.sortedByDescending { it.timestamp }) // Ordenar por timestamp
                 adapter.notifyDataSetChanged()
             },
             onError = { e ->

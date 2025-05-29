@@ -12,8 +12,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:text="FRIKIDATES"
-        android:textSize="40sp"
-        android:textStyle="bold|italic"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#432871"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -22,12 +23,15 @@
         android:id="@+id/viewSwitcher"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="2dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tw_title">
 
-        <!-- Vista de Login -->
+        <!-- Vista de Registro -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -35,13 +39,16 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/rounded_background_personality"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="12dp">
 
                 <EditText
                     android:id="@+id/et_register_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@android:drawable/editbox_background"
+                    android:backgroundTint="#47673AB7"
                     android:hint="Nombre"
                     android:inputType="textPersonName" />
 
@@ -49,6 +56,9 @@
                     android:id="@+id/et_register_surname"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@android:drawable/editbox_background"
+                    android:backgroundTint="#47673AB7"
                     android:hint="Apellidos"
                     android:inputType="textPersonName" />
 
@@ -56,6 +66,9 @@
                     android:id="@+id/et_register_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@android:drawable/editbox_background"
+                    android:backgroundTint="#47673AB7"
                     android:hint="Correo electrónico"
                     android:inputType="textEmailAddress" />
 
@@ -63,6 +76,9 @@
                     android:id="@+id/et_register_password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@android:drawable/editbox_background"
+                    android:backgroundTint="#47673AB7"
                     android:hint="Contraseña"
                     android:inputType="textPassword" />
 
@@ -70,29 +86,43 @@
                     android:id="@+id/tv_gender"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Género" />
+                    android:layout_marginTop="16dp"
+                    android:text="Género"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <Spinner
                     android:id="@+id/spinner3"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/spinner_background" />
 
                 <TextView
                     android:id="@+id/tv_gender_find"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Género a buscar" />
+                    android:layout_marginTop="16dp"
+                    android:text="Género a buscar"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <Spinner
                     android:id="@+id/spinner4"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/spinner_background" />
 
                 <TextView
                     android:id="@+id/tv_edad"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Rango de edad" />
+                    android:layout_marginTop="16dp"
+                    android:text="Rango de edad"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <com.google.android.material.slider.RangeSlider
                     android:id="@+id/age_range_slider"
@@ -105,13 +135,15 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <TextView
                         android:id="@+id/tv_edadmin"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Edad mínima: 18" />
+                        android:text="Edad mínima: 18"
+                        android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/tv_edadmax"
@@ -120,21 +152,22 @@
                         android:layout_weight="1"
                         android:gravity="end"
                         android:text="Edad máxima: 99+"
-                        android:textAlignment="gravity" />
-
+                        android:textAlignment="gravity"
+                        android:textSize="16sp" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingTop="16dp">
+                    android:padding="12dp">
 
                     <TextView
                         android:id="@+id/birthdate_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Fecha de Nacimiento"
+                        android:textColor="#000000"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -143,34 +176,42 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:background="#E4AAAA"
+                        android:background="#47673AB7"
                         android:padding="12dp"
                         android:text="Selecciona tu fecha de nacimiento"
                         android:textSize="16sp" />
-
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/tv_distancia"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Distancia máxima" />
+                    android:layout_marginTop="16dp"
+                    android:text="Distancia máxima"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <SeekBar
                     android:id="@+id/seekBarDistancia"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:progressBackgroundTint="#E0E0E0"
+                    android:progressTint="#A100A5"
+                    android:thumbTint="#47673AB7" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
                     <TextView
                         android:id="@+id/tvDistRangeMin"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="5 km" />
+                        android:text="5 km"
+                        android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/tvDistRangeMax"
@@ -179,9 +220,8 @@
                         android:layout_weight="1"
                         android:gravity="end"
                         android:text="200 km"
-                        android:textAlignment="gravity" />
-
-
+                        android:textAlignment="gravity"
+                        android:textSize="16sp" />
                 </LinearLayout>
 
                 <TextView
@@ -190,6 +230,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Descripción"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <EditText
@@ -197,6 +239,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
                     android:background="@android:drawable/editbox_background"
+                    android:backgroundTint="#47673AB7"
                     android:gravity="top"
                     android:hint="Escribe algo sobre ti..."
                     android:inputType="textMultiLine" />
@@ -205,6 +248,7 @@
                     android:id="@+id/btn_register"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
                     android:text="Siguiente" />
 
                 <TextView
@@ -214,21 +258,25 @@
                     android:layout_gravity="center_horizontal"
                     android:paddingTop="16dp"
                     android:text="¿Ya tienes cuenta? Inicia sesión"
-                    android:textColor="@android:color/holo_blue_dark" />
-
+                    android:textColor="@android:color/holo_blue_light"
+                    android:textSize="16sp" />
             </LinearLayout>
         </ScrollView>
 
+        <!-- Vista de Login -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@drawable/rounded_background"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="12dp">
 
             <EditText
                 android:id="@+id/et_login_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@android:drawable/editbox_background"
+                android:backgroundTint="#47673AB7"
                 android:hint="Correo electrónico"
                 android:inputType="textEmailAddress" />
 
@@ -236,6 +284,9 @@
                 android:id="@+id/et_login_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@android:drawable/editbox_background"
+                android:backgroundTint="#47673AB7"
                 android:hint="Contraseña"
                 android:inputType="textPassword" />
 
@@ -243,6 +294,7 @@
                 android:id="@+id/btn_login"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:text="Iniciar sesión" />
 
             <TextView
@@ -250,32 +302,30 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:paddingTop="8dp"
+                android:paddingTop="16dp"
                 android:text="He olvidado mi contraseña"
-                android:textColor="@android:color/holo_blue_dark" />
+                android:textColor="@android:color/holo_blue_light"
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/tv_go_to_register"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:paddingTop="8dp"
+                android:paddingTop="16dp"
                 android:text="¿No tienes cuenta? Créala"
-                android:textColor="@android:color/holo_blue_dark" />
+                android:textColor="@android:color/holo_blue_light"
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/tv_resend_mail"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:paddingTop="8dp"
+                android:paddingTop="16dp"
                 android:text="¿No te ha llegado el correo de verificación? Reenviar"
-                android:textColor="@android:color/holo_blue_dark"
-                 />
-
+                android:textColor="@android:color/holo_blue_light"
+                android:textSize="16sp" />
         </LinearLayout>
-
-        <!-- Vista de Registro -->
-
     </ViewSwitcher>
 </androidx.constraintlayout.widget.ConstraintLayout>

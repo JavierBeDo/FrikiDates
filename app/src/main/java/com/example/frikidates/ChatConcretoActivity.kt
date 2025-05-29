@@ -60,7 +60,7 @@ class ChatConcretoActivity : BaseActivity() {
         rvMensajes.layoutManager = lm
         rvMensajes.adapter = adapter
 
-        // Dentro de onCreate, después de recibir matchId:
+        // Obtener matchId
         val matchId = intent.getStringExtra("matchId") ?: getString(R.string.default_match_id)
 
         btnEnviar.setOnClickListener {
@@ -83,7 +83,6 @@ class ChatConcretoActivity : BaseActivity() {
             context = this,
             userId = matchId,
             onSuccess = { matchedUserId ->
-
                 if (matchedUserId.isBlank()) {
                     Log.e("ChatConcreto", getString(R.string.error_getting_matched_user_id))
                     return@getMatchedUserId
@@ -117,7 +116,6 @@ class ChatConcretoActivity : BaseActivity() {
                         fotoPerfil.setImageResource(R.drawable.default_avatar)
                     }
                 )
-
             },
             onFailure = { e ->
                 Log.e("ChatConcreto", getString(R.string.error_getting_matched_user_id, e.message ?: ""))
