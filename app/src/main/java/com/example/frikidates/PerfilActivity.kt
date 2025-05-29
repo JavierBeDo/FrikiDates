@@ -180,8 +180,8 @@ class PerfilActivity : AppCompatActivity() {
 
         loadUserImages()
         loadUserInfo()
-        setupGenderSpinner(genderSpinner, "preferenciaGenero")
-        setupGenderSpinner(genderSpinner2, "genero")
+        setupGenderSpinner(genderSpinner, "genero")
+        setupGenderSpinner(genderSpinner2, "preferenciaGenero")
         loadNotificationSettings()
         interestManager = InterestManager(this, findViewById(R.id.ll_interest_vertical))
         interestManager.loadAndDisplayInterests()

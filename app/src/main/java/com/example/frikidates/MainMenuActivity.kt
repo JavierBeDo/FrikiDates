@@ -1,7 +1,6 @@
 package com.example.frikidates
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -10,14 +9,10 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.frikidates.firebase.FirebaseRepository
 import com.example.frikidates.util.LocationEncryptionHelper
 import com.google.android.gms.location.LocationServices
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
 import com.yuyakaido.android.cardstackview.*
 
 class MainMenuActivity : AppCompatActivity() {
@@ -33,6 +28,8 @@ class MainMenuActivity : AppCompatActivity() {
     private var currentUserInterests = listOf<String>()
     private var currentUserLatitude: Double = 0.0
     private var currentUserLongitude: Double = 0.0
+    private var rewindCount = 0
+    private val maxRewinds = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,10 +44,13 @@ class MainMenuActivity : AppCompatActivity() {
         manager = CardStackLayoutManager(this, object : CardStackListener {
             override fun onCardSwiped(direction: Direction?) {
                 Log.d("CardStack", "Swiped: $direction, profiles left: ${profilesList.size - manager.topPosition}")
+                rewindCount = 0 // Reset rewind count on swipe
+                btnRewind.isEnabled = true
+                btnRewind.alpha = 1.0f
             }
             override fun onCardDragging(direction: Direction?, ratio: Float) {}
             override fun onCardRewound() {
-                Log.d("CardStack", "Rewound")
+                Log.d("CardStack", "Rewound, count: $rewindCount")
             }
             override fun onCardCanceled() {}
             override fun onCardAppeared(view: android.view.View?, position: Int) {
@@ -59,7 +59,10 @@ class MainMenuActivity : AppCompatActivity() {
             override fun onCardDisappeared(view: android.view.View?, position: Int) {
                 Log.d("CardStack", "Card disappeared at position: $position")
             }
-        })
+        }).apply {
+            setCanScrollHorizontal(true)
+            setCanScrollVertical(false)
+        }
         cardStackView.layoutManager = manager
 
         BottomNavManager.setupNavigation(this)
@@ -84,12 +87,23 @@ class MainMenuActivity : AppCompatActivity() {
         }
 
         btnRewind.setOnClickListener {
-            val setting = RewindAnimationSetting.Builder()
-                .setDirection(Direction.Bottom)
-                .setDuration(200)
-                .build()
-            manager.setRewindAnimationSetting(setting)
-            cardStackView.rewind()
+            if (rewindCount < maxRewinds) {
+                val setting = RewindAnimationSetting.Builder()
+                    .setDirection(Direction.Bottom)
+                    .setDuration(200)
+                    .build()
+                manager.setRewindAnimationSetting(setting)
+                cardStackView.rewind()
+                rewindCount++
+                Log.d("Rewind", "Rewind $rewindCount of $maxRewinds")
+                if (rewindCount >= maxRewinds) {
+                    btnRewind.isEnabled = false
+                    btnRewind.alpha = 0.5f
+                    Toast.makeText(this, "Límite de retrocesos alcanzado", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Límite de retrocesos alcanzado", Toast.LENGTH_SHORT).show()
+            }
         }
 
         // Location permission request
@@ -98,55 +112,11 @@ class MainMenuActivity : AppCompatActivity() {
                 getUserLocation()
             } else {
                 Toast.makeText(this, "Necesitamos tu ubicación para mostrarte personas cercanas", Toast.LENGTH_LONG).show()
-                loadCurrentUserInterestsAndProfiles()
+                loadInterestsAndProfiles()
             }
         }
 
         solicitarPermisoUbicacion()
-    }
-
-    private fun loadCurrentUserInterestsAndProfiles() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Log.w("MainMenuActivity", "Usuario no autenticado")
-            cardStackView.adapter = CardStackAdapter(this, emptyList(), emptyList(), 0.0, 0.0)
-            return
-        }
-
-        FirebaseRepository.fetchUserInterests(
-            onSuccess = { interests ->
-                currentUserInterests = interests
-                Log.d("MainMenuActivity", "User interests: $currentUserInterests")
-                loadProfilesFromFirestore()
-            },
-            onError = { e ->
-                Log.e("MainMenuActivity", "Error fetching user interests", e)
-                cardStackView.adapter = CardStackAdapter(this, emptyList(), emptyList(), 0.0, 0.0)
-            }
-        )
-    }
-
-    private fun loadProfilesFromFirestore() {
-        val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
-        FirebaseRepository.loadProfiles(
-            currentUserEmail,
-            onSuccess = { profiles ->
-                profilesList.clear()
-                profilesList.addAll(profiles)
-                cardStackView.adapter = CardStackAdapter(
-                    this,
-                    profilesList,
-                    currentUserInterests,
-                    currentUserLatitude,
-                    currentUserLongitude
-                )
-                Log.d("MainMenuActivity", "Adapter updated with ${profilesList.size} profiles")
-            },
-            onError = { e ->
-                Log.e("MainMenuActivity", getString(R.string.error_loading_profiles), e)
-                cardStackView.adapter = CardStackAdapter(this, emptyList(), emptyList(), 0.0, 0.0)
-            }
-        )
     }
 
     private fun solicitarPermisoUbicacion() {
@@ -159,40 +129,67 @@ class MainMenuActivity : AppCompatActivity() {
 
     private fun getUserLocation() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     if (location == null) {
                         Log.w("Location", "Location is null")
-                        loadCurrentUserInterestsAndProfiles()
+                        loadInterestsAndProfiles()
                         return@addOnSuccessListener
                     }
-
                     currentUserLatitude = location.latitude
                     currentUserLongitude = location.longitude
                     val encryptedLocation = LocationEncryptionHelper.encryptLocation(currentUserLatitude, currentUserLongitude)
-                    saveLocationToFirebase(encryptedLocation, currentUserLatitude, currentUserLongitude)
-                    loadCurrentUserInterestsAndProfiles()
+                    val userId = FirebaseRepository.getCurrentUserId()
+                    if (userId == null) {
+                        Log.e("Location", "Usuario no autenticado")
+                        loadInterestsAndProfiles()
+                        return@addOnSuccessListener
+                    }
+                    FirebaseRepository.saveUserLocation(
+                        userId,
+                        encryptedLocation,
+                        currentUserLatitude,
+                        currentUserLongitude,
+                        onSuccess = { Log.d("LocationUpdate", "Location saved") },
+                        onFailure = { e ->
+                            Log.e("LocationUpdate", "Error saving location", e)
+                            loadInterestsAndProfiles()
+                        }
+                    )
+                    loadInterestsAndProfiles()
                 }
                 .addOnFailureListener { e ->
                     Log.e("Location", "Error getting location", e)
-                    loadCurrentUserInterestsAndProfiles()
+                    loadInterestsAndProfiles()
                 }
         } else {
             Log.w("Location", "Permission not granted")
-            loadCurrentUserInterestsAndProfiles()
+            loadInterestsAndProfiles()
         }
     }
 
-    private fun saveLocationToFirebase(encryptedLocation: String, latitude: Double, longitude: Double) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        FirebaseRepository.saveUserLocation(
-            userId,
-            encryptedLocation,
-            latitude,
-            longitude,
-            onSuccess = { Log.d("LocationUpdate", "Location saved") },
-            onFailure = { e -> Log.e("LocationUpdate", "Error saving location", e) }
+    private fun loadInterestsAndProfiles() {
+        FirebaseRepository.loadUserInterestsAndProfiles(
+            currentUserLatitude,
+            currentUserLongitude,
+            onSuccess = { interests, profiles ->
+                currentUserInterests = interests
+                profilesList.clear()
+                profilesList.addAll(profiles)
+                cardStackView.adapter = CardStackAdapter(
+                    this,
+                    profilesList,
+                    currentUserInterests,
+                    currentUserLatitude,
+                    currentUserLongitude
+                )
+                Log.d("MainMenuActivity", "Adapter updated with ${profilesList.size} profiles, interests: $interests")
+            },
+            onError = { e ->
+                Log.e("MainMenuActivity", "Error loading interests or profiles: ${e.message}", e)
+                cardStackView.adapter = CardStackAdapter(this, emptyList(), emptyList(), 0.0, 0.0)
+            }
         )
     }
 }
