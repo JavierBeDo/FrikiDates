@@ -11,6 +11,7 @@ import com.example.frikidates.MensajeRecibir
 import com.example.frikidates.Profile
 import com.example.frikidates.R
 import com.example.frikidates.util.LocationEncryptionHelper
+import com.example.frikidates.util.ProfileUtils
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.AuthResult
@@ -60,8 +61,12 @@ object FirebaseRepository {
     fun getProfileDocument(profileId: String) =
         db.collection("profiles").document(profileId).get()
 
+    fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid
+    }
+
     fun saveUserDocument(uid: String, userData: Map<String, Any>): Task<Void> {
-        return db.collection("users").document(uid).set(userData)
+        return db.collection("user").document(uid).set(userData)
     }
 
     fun saveProfileDocument(profileId: String, profileData: Map<String, Any>): Task<Void> {
@@ -643,73 +648,189 @@ fun getFirstProfileImage(matchedUserId: String, onSuccess: (Uri) -> Unit, onFail
 
     fun loadProfiles(
         currentUserEmail: String?,
+        currentUserLat: Double,
+        currentUserLon: Double,
+        currentUserInterests: List<String>,
         onSuccess: (List<Profile>) -> Unit,
         onError: (Exception) -> Unit
     ) {
         if (currentUserEmail == null) {
+            Log.e("FirebaseRepository", "Usuario no autenticado: email nulo")
             onError(Exception("Usuario no autenticado"))
             return
         }
-        db.collection("profiles").get()
-            .addOnSuccessListener { result ->
-                val profiles = mutableListOf<Profile>()
-                val filteredDocs = result.documents.filter {
-                    val email = it.getString("email")
-                    email != null && email != currentUserEmail
-                }
-                if (filteredDocs.isEmpty()) {
-                    onSuccess(emptyList())
+        val currentUserId = auth.currentUser?.uid ?: run {
+            Log.e("FirebaseRepository", "Usuario no autenticado: UID nulo")
+            onError(Exception("Usuario no autenticado"))
+            return
+        }
+        val currentProfileId = "profile_$currentUserId"
+        db.collection("profiles").document(currentProfileId).get()
+            .addOnSuccessListener { currentUserDoc ->
+                if (!currentUserDoc.exists()) {
+                    Log.e("FirebaseRepository", "Perfil del usuario no encontrado: $currentProfileId")
+                    onError(Exception("Perfil del usuario no encontrado"))
                     return@addOnSuccessListener
                 }
+                val userPrefGender = currentUserDoc.getString("preferenciaGenero") ?: "Cualquiera"
+                val userAgeMin = currentUserDoc.getLong("rangoEdadMin")?.toInt() ?: 18
+                val userAgeMax = currentUserDoc.getLong("rangoEdadMax")?.toInt() ?: 100
+                val userMaxDistance = currentUserDoc.getLong("distanciaMax")?.toInt() ?: 1000 // Aumentado a 1000 km
+                Log.d("FirebaseRepository", "Filtros: prefGender=$userPrefGender, ageMin=$userAgeMin, ageMax=$userAgeMax, maxDistance=$userMaxDistance")
 
-                var loadedCount = 0
-                filteredDocs.forEach { doc ->
-                    val id = doc.id
-                    val data = doc.data ?: emptyMap<String, Any>()
-                    val name = data["name"] as? String ?: ""
-                    val birthdate = data["birthdate"] as? String ?: ""
-                    val gender = data["genero"] as? String ?: "Género desconocido"
-                    val interests = data["interests"] as? List<String> ?: emptyList()
-
-                    // Obtener encryptedLocation de la subcolección
-                    db.collection("profiles").document(id).collection("location").document("actual").get()
-                        .addOnSuccessListener { locationDoc ->
-                            val encryptedLocation = locationDoc.getString("encryptedLocation") ?: ""
-
-                            // Cargar imágenes
-                            loadImageUrlsFromStorage(id, { images ->
-                                profiles.add(Profile(id, name, birthdate, gender, encryptedLocation, interests, images))
-                                loadedCount++
-                                if (loadedCount == filteredDocs.size) {
-                                    onSuccess(profiles)
-                                }
-                            }, { e ->
-                                Log.e("FirebaseRepository", "Error loading images for $id", e)
-                                loadedCount++
-                                if (loadedCount == filteredDocs.size) {
-                                    onSuccess(profiles)
-                                }
-                            })
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("FirebaseRepository", "Error loading location for $id", e)
-                            // Usar ubicación vacía si falla
-                            loadImageUrlsFromStorage(id, { images ->
-                                profiles.add(Profile(id, name, birthdate, gender, "", interests, images))
-                                loadedCount++
-                                if (loadedCount == filteredDocs.size) {
-                                    onSuccess(profiles)
-                                }
-                            }, { e ->
-                                loadedCount++
-                                if (loadedCount == filteredDocs.size) {
-                                    onSuccess(profiles)
-                                }
-                            })
-                        }
+                val query = if (userPrefGender == "Cualquiera") {
+                    db.collection("profiles")
+                } else {
+                    db.collection("profiles").whereEqualTo("genero", userPrefGender)
                 }
+
+                query.get()
+                    .addOnSuccessListener { result ->
+                        Log.d("FirebaseRepository", "Perfiles encontrados: ${result.documents.size}")
+                        val profiles = mutableListOf<Profile>()
+                        val filteredDocs = result.documents.filter {
+                            val email = it.getString("email")
+                            email != null && email != currentUserEmail
+                        }
+                        Log.d("FirebaseRepository", "Perfiles tras filtro de email: ${filteredDocs.size}")
+                        if (filteredDocs.isEmpty()) {
+                            Log.w("FirebaseRepository", "No hay perfiles válidos tras filtro de email")
+                            onSuccess(emptyList())
+                            return@addOnSuccessListener
+                        }
+                        var loadedCount = 0
+                        filteredDocs.forEach { doc ->
+                            val id = doc.id
+                            val data = doc.data ?: emptyMap<String, Any>()
+                            val name = data["name"] as? String
+                            if (name == null) {
+                                Log.d("FirebaseRepository", "Perfil $id descartado: nombre faltante")
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) onSuccess(profiles)
+                                return@forEach
+                            }
+                            val birthdate = data["birthdate"] as? String
+                            if (birthdate == null) {
+                                Log.d("FirebaseRepository", "Perfil $id descartado: fecha de nacimiento faltante")
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) onSuccess(profiles)
+                                return@forEach
+                            }
+                            val gender = data["genero"] as? String
+                            if (gender == null) {
+                                Log.d("FirebaseRepository", "Perfil $id descartado: género faltante")
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) onSuccess(profiles)
+                                return@forEach
+                            }
+                            val interests = data["interests"] as? List<String> ?: emptyList()
+                            val age = try {
+                                ProfileUtils.calculateAge(birthdate)
+                            } catch (e: Exception) {
+                                Log.d("FirebaseRepository", "Perfil $id descartado: formato de birthdate inválido ($birthdate)")
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) onSuccess(profiles)
+                                return@forEach
+                            }
+                            if (age < userAgeMin || age > userAgeMax) {
+                                Log.d("FirebaseRepository", "Perfil $id descartado: edad=$age no en [$userAgeMin, $userAgeMax]")
+                                loadedCount++
+                                if (loadedCount == filteredDocs.size) onSuccess(profiles)
+                                return@forEach
+                            }
+                            db.collection("profiles").document(id).collection("location").document("actual").get()
+                                .addOnSuccessListener { locationDoc ->
+                                    val encryptedLocation = locationDoc.getString("encryptedLocation") ?: ""
+                                    var distance = 0.0
+                                    if (encryptedLocation.isNotEmpty() && currentUserLat != 0.0 && currentUserLon != 0.0) {
+                                        val coords = LocationEncryptionHelper.decryptLocation(encryptedLocation)
+                                        if (coords != null) {
+                                            val (otherLat, otherLon) = coords
+                                            distance = ProfileUtils.calculateDistance(currentUserLat, currentUserLon, otherLat, otherLon)
+                                            if (distance > userMaxDistance) {
+                                                Log.d("FirebaseRepository", "Perfil $id descartado: distancia=$distance km > $userMaxDistance km")
+                                                loadedCount++
+                                                if (loadedCount == filteredDocs.size) onSuccess(profiles)
+                                                return@addOnSuccessListener
+                                            }
+                                        } else {
+                                            Log.d("FirebaseRepository", "Perfil $id incluido: no se pudo desencriptar ubicación")
+                                        }
+                                    } else {
+                                        Log.d("FirebaseRepository", "Perfil $id incluido: sin ubicación o ubicación de usuario inválida")
+                                    }
+                                    loadImageUrlsFromStorage(id, { images ->
+                                        profiles.add(Profile(id, name, birthdate, gender, encryptedLocation, interests, images))
+                                        Log.d("FirebaseRepository", "Perfil $id añadido: edad=$age, distancia=$distance km")
+                                        loadedCount++
+                                        if (loadedCount == filteredDocs.size) {
+                                            val sortedProfiles = profiles.sortedByDescending {
+                                                ProfileUtils.calculateCompatibility(currentUserInterests, it.interests)
+                                            }
+                                            onSuccess(sortedProfiles)
+                                        }
+                                    }, { e ->
+                                        Log.e("FirebaseRepository", "Error cargando imágenes para $id: ${e.message}", e)
+                                        profiles.add(Profile(id, name, birthdate, gender, encryptedLocation, interests, emptyList()))
+                                        loadedCount++
+                                        if (loadedCount == filteredDocs.size) {
+                                            val sortedProfiles = profiles.sortedByDescending {
+                                                ProfileUtils.calculateCompatibility(currentUserInterests, it.interests)
+                                            }
+                                            onSuccess(sortedProfiles)
+                                        }
+                                    })
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("FirebaseRepository", "Error cargando ubicación para $id: ${e.message}", e)
+                                    profiles.add(Profile(id, name, birthdate, gender, "", interests, emptyList()))
+                                    loadedCount++
+                                    if (loadedCount == filteredDocs.size) {
+                                        val sortedProfiles = profiles.sortedByDescending {
+                                            ProfileUtils.calculateCompatibility(currentUserInterests, it.interests)
+                                        }
+                                        onSuccess(sortedProfiles)
+                                    }
+                                }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("FirebaseRepository", "Error cargando perfiles: ${e.message}", e)
+                        onError(e)
+                    }
             }
-            .addOnFailureListener { e -> onError(e) }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseRepository", "Error obteniendo preferencias del usuario: ${e.message}", e)
+                onError(e)
+            }
+    }
+
+    fun loadUserInterestsAndProfiles(
+        latitude: Double,
+        longitude: Double,
+        onSuccess: (List<String>, List<Profile>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            onError(Exception("Usuario no autenticado"))
+            return
+        }
+        fetchUserInterests(
+            onSuccess = { interests ->
+                loadProfiles(
+                    currentUser.email,
+                    latitude,
+                    longitude,
+                    interests,
+                    onSuccess = { profiles ->
+                        onSuccess(interests, profiles)
+                    },
+                    onError = { e -> onError(e) }
+                )
+            },
+            onError = { e -> onError(e) }
+        )
     }
 
     fun loadImageUrlsFromStorage(

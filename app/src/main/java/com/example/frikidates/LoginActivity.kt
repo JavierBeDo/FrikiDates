@@ -211,7 +211,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Spinners
         val genderOptions = arrayOf("Hombre", "Mujer", "No-binario")
-        val genderPrefOptions = arrayOf("Masculino", "Femenino", "Cualquiera")
+        val genderPrefOptions = arrayOf("Hombre", "Mujer", "Todos")
         spinnerGender.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderOptions)
         spinnerGenderPref.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderPrefOptions)
 
