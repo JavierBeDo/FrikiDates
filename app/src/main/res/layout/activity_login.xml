@@ -32,6 +32,70 @@
         app:layout_constraintTop_toBottomOf="@+id/tw_title">
 
         <!-- Vista de Registro -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/rounded_background"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <EditText
+                android:id="@+id/et_login_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:drawable/editbox_background"
+                android:backgroundTint="#47673AB7"
+                android:hint="Correo electrónico"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/et_login_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@android:drawable/editbox_background"
+                android:backgroundTint="#47673AB7"
+                android:hint="Contraseña"
+                android:inputType="textPassword" />
+
+            <Button
+                android:id="@+id/btn_login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Iniciar sesión" />
+
+            <TextView
+                android:id="@+id/tv_forgot_password"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="16dp"
+                android:text="He olvidado mi contraseña"
+                android:textColor="@android:color/holo_blue_light"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tv_go_to_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="16dp"
+                android:text="¿No tienes cuenta? Créala"
+                android:textColor="@android:color/holo_blue_light"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tv_resend_mail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingTop="16dp"
+                android:text="¿No te ha llegado el correo de verificación? Reenviar"
+                android:textColor="@android:color/holo_blue_light"
+                android:textSize="16sp" />
+        </LinearLayout>
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -264,68 +328,5 @@
         </ScrollView>
 
         <!-- Vista de Login -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/rounded_background"
-            android:orientation="vertical"
-            android:padding="12dp">
-
-            <EditText
-                android:id="@+id/et_login_email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:drawable/editbox_background"
-                android:backgroundTint="#47673AB7"
-                android:hint="Correo electrónico"
-                android:inputType="textEmailAddress" />
-
-            <EditText
-                android:id="@+id/et_login_password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@android:drawable/editbox_background"
-                android:backgroundTint="#47673AB7"
-                android:hint="Contraseña"
-                android:inputType="textPassword" />
-
-            <Button
-                android:id="@+id/btn_login"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Iniciar sesión" />
-
-            <TextView
-                android:id="@+id/tv_forgot_password"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:paddingTop="16dp"
-                android:text="He olvidado mi contraseña"
-                android:textColor="@android:color/holo_blue_light"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/tv_go_to_register"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:paddingTop="16dp"
-                android:text="¿No tienes cuenta? Créala"
-                android:textColor="@android:color/holo_blue_light"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/tv_resend_mail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:paddingTop="16dp"
-                android:text="¿No te ha llegado el correo de verificación? Reenviar"
-                android:textColor="@android:color/holo_blue_light"
-                android:textSize="16sp" />
-        </LinearLayout>
     </ViewSwitcher>
 </androidx.constraintlayout.widget.ConstraintLayout>
