@@ -368,34 +368,50 @@ object FirebaseRepository {
         onStatusChanged: (String) -> Unit,
         onError: (Exception) -> Unit
     ) {
+        Log.d("FirebaseRepository", "Fetching name and status for matchedUserId: $matchedUserId")
         val profilesCollection = context.getString(R.string.collection_profiles)
         val fieldName = context.getString(R.string.field_name)
         val rtdbUserStatusPath = context.getString(R.string.rtdb_user_status_path)
 
         val profileId = if (matchedUserId.startsWith("profile_")) matchedUserId else "profile_$matchedUserId"
+        Log.d("FirebaseRepository", "Profile ID: $profileId, Field name: $fieldName")
 
-        db.collection("profiles")
+        db.collection(profilesCollection)
             .document(profileId)
             .get()
             .addOnSuccessListener { profileDoc ->
-                val nombreReal = profileDoc.getString(fieldName) ?: "Usuario"
-                onNameReceived(nombreReal)
+                if (profileDoc.exists()) {
+                    val nombreReal = profileDoc.getString(fieldName) ?: "Usuario"
+                    Log.d("FirebaseRepository", "Name retrieved: $nombreReal for profileId: $profileId")
+                    onNameReceived(nombreReal)
 
-                val folderName = profileId.removePrefix(context.getString(R.string.prefix_profile))
-                val statusPath = String.format(rtdbUserStatusPath, folderName)
-                val estadoRef = rtdbInstance.getReference(statusPath)
+                    val folderName = profileId.removePrefix(context.getString(R.string.prefix_profile))
+                    val statusPath = String.format(rtdbUserStatusPath, folderName)
+                    Log.d("FirebaseRepository", "Status path: $statusPath")
+                    val estadoRef = rtdbInstance.getReference(statusPath)
 
-                estadoRef.addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val estado = snapshot.getValue(String::class.java)
-                        if (estado != null) onStatusChanged(estado)
-                    }
-                    override fun onCancelled(error: DatabaseError) {
-                        onError(Exception(error.message))
-                    }
-                })
+                    estadoRef.addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            val estado = snapshot.getValue(String::class.java) ?: "inactive"
+                            Log.d("FirebaseRepository", "Status changed: $estado")
+                            onStatusChanged(estado)
+                        }
+                        override fun onCancelled(error: DatabaseError) {
+                            Log.e("FirebaseRepository", "RTDB error: ${error.message}")
+                            onError(Exception(error.message))
+                        }
+                    })
+                } else {
+                    Log.e("FirebaseRepository", "Profile document does not exist: $profileId")
+                    onNameReceived("Usuario")
+                    onError(Exception("Profile not found"))
+                }
             }
-            .addOnFailureListener { e -> onError(e) }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseRepository", "Error fetching profile: ${e.message}", e)
+                onNameReceived("Usuario")
+                onError(e)
+            }
     }
 
 
