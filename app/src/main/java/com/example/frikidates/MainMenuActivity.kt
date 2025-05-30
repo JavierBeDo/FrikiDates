@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import com.example.frikidates.firebase.FirebaseRepository
 import com.example.frikidates.util.LocationEncryptionHelper
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.firestore.DocumentSnapshot
 import com.yuyakaido.android.cardstackview.*
 
 class MainMenuActivity : AppCompatActivity() {
@@ -31,6 +32,9 @@ class MainMenuActivity : AppCompatActivity() {
     private var rewindCount = 0
     private val maxRewinds = 1
 
+    private var lastDocument: DocumentSnapshot? = null
+    private var isLoadingMore = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)
@@ -43,10 +47,68 @@ class MainMenuActivity : AppCompatActivity() {
         // Initialize CardStackView
         manager = CardStackLayoutManager(this, object : CardStackListener {
             override fun onCardSwiped(direction: Direction?) {
-                Log.d("CardStack", "Swiped: $direction, profiles left: ${profilesList.size - manager.topPosition}")
-                rewindCount = 0 // Reset rewind count on swipe
+                val position = manager.topPosition - 1
+                if (position < 0 || position >= profilesList.size) {
+                    Log.w("CardStack", "Posición inválida: $position, profilesList.size=${profilesList.size}")
+                    return
+                }
+                val swipedProfile = profilesList[position]
+                val userId = FirebaseRepository.getCurrentUserId() ?: run {
+                    Log.e("CardStack", "Usuario no autenticado")
+                    Toast.makeText(this@MainMenuActivity, "Error: usuario no autenticado", Toast.LENGTH_SHORT).show()
+                    return
+                }
+                when (direction) {
+                    Direction.Right -> {
+                        FirebaseRepository.registerSwipe(
+                            userId,
+                            swipedProfile.id,
+                            "like",
+                            onSuccess = {
+                                Log.d("CardStack", "Swipe like registrado para ${swipedProfile.id}")
+                                FirebaseRepository.checkForMatch(
+                                    userId,
+                                    swipedProfile.id,
+                                    onMatch = { matchId ->
+                                        FirebaseRepository.createMatch(
+                                            userId,
+                                            swipedProfile.id,
+                                            onSuccess = {
+                                                Log.d("CardStack", "Match creado: $matchId")
+                                                Toast.makeText(this@MainMenuActivity, "¡Match con ${swipedProfile.name}!", Toast.LENGTH_LONG).show()
+                                            },
+                                            onFailure = { e ->
+                                                Log.e("CardStack", "Error creando match: ${e.message}", e)
+                                                Toast.makeText(this@MainMenuActivity, "Error creando match", Toast.LENGTH_SHORT).show()
+                                            }
+                                        )
+                                    },
+                                    onNoMatch = { Log.d("CardStack", "No match con ${swipedProfile.id}") },
+                                    onError = { e ->
+                                        Log.e("CardStack", "Error verificando match: ${e.message}", e)
+                                        Toast.makeText(this@MainMenuActivity, "Error verificando match", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            },
+                            onFailure = { e ->
+                                Log.e("CardStack", "Error registrando swipe: ${e.message}", e)
+                                Toast.makeText(this@MainMenuActivity, "Error registrando swipe", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                    Direction.Left -> {
+                        Log.d("CardStack", "Dislike en ${swipedProfile.id}, no se registra")
+                    }
+                    else -> return
+                }
+                rewindCount = 0
                 btnRewind.isEnabled = true
                 btnRewind.alpha = 1.0f
+                Log.d("CardStack", "Profiles left: ${profilesList.size - manager.topPosition}")
+
+                if (manager.topPosition >= profilesList.size - 5 && !isLoadingMore) {
+                    loadInterestsAndProfiles()
+                }
             }
             override fun onCardDragging(direction: Direction?, ratio: Float) {}
             override fun onCardRewound() {

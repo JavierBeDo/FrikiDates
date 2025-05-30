@@ -85,16 +85,16 @@ class PerfilActivity : AppCompatActivity() {
 
         //generar un match
 
-        FirebaseRepository.createMatch(
-            currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-            matchedUserId = "profile_2H1o6XCEBAVHFZpt3m443wm3zMI2", // ID del otro usuario
-            onSuccess = {
-                Log.d("MainActivity", "Match creado")
-            },
-            onFailure = { e ->
-                Log.e("MainActivity", "Error creando match: ${e.message}")
-            }
-        )
+//        FirebaseRepository.createMatch(
+//            currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+//            matchedUserId = "profile_2H1o6XCEBAVHFZpt3m443wm3zMI2", // ID del otro usuario
+//            onSuccess = {
+//                Log.d("MainActivity", "Match creado")
+//            },
+//            onFailure = { e ->
+//                Log.e("MainActivity", "Error creando match: ${e.message}")
+//            }
+//        )
 
         val logoutTextView = findViewById<TextView>(R.id.tv_logout)
         logoutTextView.setOnClickListener {
