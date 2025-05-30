@@ -32,9 +32,6 @@ class MainMenuActivity : AppCompatActivity() {
     private var rewindCount = 0
     private val maxRewinds = 1
 
-    private var lastDocument: DocumentSnapshot? = null
-    private var isLoadingMore = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)
@@ -106,7 +103,7 @@ class MainMenuActivity : AppCompatActivity() {
                 btnRewind.alpha = 1.0f
                 Log.d("CardStack", "Profiles left: ${profilesList.size - manager.topPosition}")
 
-                if (manager.topPosition >= profilesList.size - 5 && !isLoadingMore) {
+                if (manager.topPosition >= profilesList.size - 5) {
                     loadInterestsAndProfiles()
                 }
             }
